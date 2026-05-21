@@ -1,0 +1,15 @@
+<h1>Добро пожаловать, <%= current_user.name %>!</h1>
+
+<div class="main-menu">
+  <h2>Главное меню</h2>
+  
+  <div class="menu-buttons">
+    <%= link_to "Задачник", tasks_menu_path, class: "btn btn-primary btn-large" %>
+    <%= link_to "Игра на двоих", game_menu_path, class: "btn btn-primary btn-large" %>
+    <%= link_to "Мини-игры", minigames_menu_path, class: "btn btn-primary btn-large" %>
+  </div>
+  
+  <div class="user-actions">
+    <%= button_to "Выйти", logout_path, method: :delete, class: "btn btn-outline" %>
+  </div>
+</div>

@@ -1,0 +1,46 @@
+<div class="auth-container">
+  <h2>Регистрация в Weiqi Core</h2>
+  
+  <%= form_with model: @user, url: signup_path, local: true do |form| %>
+    <% if @user.errors.any? %>
+      <div class="error-messages">
+        <h4><%= pluralize(@user.errors.count, "ошибка") %> не позволяет зарегистрироваться:</h4>
+        <ul>
+          <% @user.errors.full_messages.each do |msg| %>
+            <li><%= msg %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+    
+    <div class="form-group">
+      <%= form.label :name, "Имя" %>
+      <%= form.text_field :name, required: true, class: "form-control" %>
+    </div>
+    
+    <div class="form-group">
+      <%= form.label :email, "Email" %>
+      <%= form.email_field :email, required: true, class: "form-control" %>
+    </div>
+    
+    <div class="form-group">
+      <%= form.label :password, "Пароль (мин. 6 символов)" %>
+      <%= form.password_field :password, required: true, class: "form-control" %>
+    </div>
+    
+    <div class="form-group">
+      <%= form.label :password_confirmation, "Подтвердите пароль" %>
+      <%= form.password_field :password_confirmation, required: true, class: "form-control" %>
+    </div>
+    
+    <div class="form-group checkbox">
+      <%= form.check_box :horror_mode_enabled %>
+      <%= form.label :horror_mode_enabled, "Включить хоррор-режим по умолчанию 😱" %>
+    </div>
+    
+    <div class="form-actions">
+      <%= form.submit "Зарегистрироваться", class: "btn btn-primary" %>
+      <%= link_to "Уже есть аккаунт? Войти", login_path, class: "btn btn-secondary" %>
+    </div>
+  <% end %>
+</div>

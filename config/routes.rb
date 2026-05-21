@@ -1,14 +1,35 @@
 Rails.application.routes.draw do
-  # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
-
-  # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
-  # Can be used by load balancers and uptime monitors to verify that the app is live.
-  get "up" => "rails/health#show", as: :rails_health_check
-
-  # Render dynamic PWA files from app/views/pwa/* (remember to link manifest in application.html.erb)
-  # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
-  # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
-
-  # Defines the root path route ("/")
-  # root "posts#index"
+  get "menu/tasks"
+  get "menu/game"
+  get "menu/minigames"
+  # === Аутентификация ===
+  get 'signup', to: 'users#new'
+  post 'signup', to: 'users#create'
+  get 'login', to: 'sessions#new'
+  post 'login', to: 'sessions#create'
+  delete 'logout', to: 'sessions#destroy'
+  
+  # === Главное меню ===
+  get 'dashboard', to: 'dashboard#index'
+  
+  # === Подменю ===
+  get 'tasks_menu', to: 'menu#tasks'           # Подменю задачника
+  get 'game_menu', to: 'menu#game'             # Подменю игры на двоих
+  get 'minigames_menu', to: 'menu#minigames'   # Подменю мини-игр
+  
+  # === Задачник ===
+  get 'tasks/normal', to: 'tasks#normal'       # Обычный режим
+  get 'tasks/horror', to: 'tasks#horror'       # Хоррор-режим
+  
+  # === Игра на двоих ===
+  get 'game/local', to: 'games#local'          # На одном устройстве
+  get 'game/online', to: 'games#online'        # На двух устройствах
+  
+  # === Мини-игры ===
+  get 'minigames/tictactoe', to: 'minigames#tictactoe'
+  get 'minigames/hangman', to: 'minigames#hangman'
+  get 'minigames/sudoku', to: 'minigames#sudoku'
+  
+  # === Корень сайта ===
+  root 'sessions#new'
 end
