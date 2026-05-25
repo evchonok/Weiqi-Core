@@ -1,3 +1,531 @@
-<h1>Игра на одном устройстве — Хоррор-режим</h1>
-<p>Здесь будет игровое поле со скримерами</p>
-<%= link_to "← Выйти в меню", game_local_modes_path, class: "btn btn-outline" %>
+<%# app/views/games/local_horror.html.erb %>
+<style>
+  /* Принудительно делаем весь фон страницы чёрным */
+  body {
+    background-color: #111 !important;
+    margin: 0;
+    padding: 0;
+  }
+  html {
+    background-color: #111 !important;
+  }
+</style>
+
+<div class="game-wrapper horror-theme" data-turbo="false">
+  <h1> Игра: Хоррор-Режим</h1>
+  
+  <div class="game-header">
+    <div class="settings-row">
+      <label>Размер доски:</label>
+      <select id="board-size" class="form-select">
+        <option value="9" selected>9x9</option>
+        <option value="13">13x13</option>
+        <option value="19">19x19</option>
+      </select>
+    </div>
+    
+    <div id="status" class="status">Ход: Чёрные ⚫</div>
+    <div class="control-buttons">
+      <button id="pass-btn" class="btn btn-danger">Пас</button>
+      <button id="reset-btn" class="btn btn-outline">Сброс</button>
+      <%= link_to "← В меню", game_local_modes_path, class: "btn btn-secondary" %>
+    </div>
+  </div>
+
+  <div class="board-scroll-wrapper">
+    <div class="board-container">
+      <!-- Доска -->
+      <div id="board" class="board"></div>
+      
+      <!-- Оверлей скримера -->
+      <div id="jumpscare-overlay">
+        <img id="jumpscare-img" src="" alt="BOO!">
+      </div>
+      
+      <!-- Модальное окно "Устал?" -->
+      <div id="tired-modal" class="tired-modal hidden">
+        <div class="modal-content">
+          <h2>😰 Устал?</h2>
+          <p>Может, сыграешь в мини-игры, чтобы расслабиться?</p>
+          <div class="modal-buttons">
+            <a href="/minigames_menu" class="btn btn-warning">🎮 В мини-игры</a>
+            <button onclick="closeTiredModal()" class="btn btn-outline">Остаться</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="game-info">
+    <div class="prisoners">
+      <span>⚫ Пленных белых: <strong id="captured-by-black">0</strong></span>
+      <span>⚪ Пленных чёрных: <strong id="captured-by-white">0</strong></span>
+    </div>
+    
+    <div id="scoreboard" class="scoreboard hidden">
+      <h3>📊 Подсчёт очков</h3>
+      <div id="score-details"></div>
+      <div id="winner-announcement" class="winner"></div>
+    </div>
+    <div id="message" class="message"></div>
+  </div>
+</div>
+
+<!-- Аудио элементы -->
+<audio id="audio-bg" loop src="/horror/audios/bg_music.mp3">
+<audio id="audio-scream" src="/horror/audios/scream.mp3">
+<audio id="audio-stone" src="/horror/audios/stone.mp3">
+<audio id="audio-end" src="asset_path('horror/audios/end_game.mp3">
+
+<style>
+  /* --- ХОРРОР СТИЛИ --- */
+  .horror-theme {
+    background-color: #111;
+    color: #d00;
+    font-family: 'Courier New', monospace;
+  }
+  
+  .horror-theme h1 { color: #a00; text-shadow: 2px 2px 4px #000; }
+  .horror-theme .status { background: #200; color: #f55; border: 1px solid #500; }
+  .horror-theme .board-container { background: #3e2723; border: 4px solid #500; }
+  .horror-theme .intersection.black { background: #000; box-shadow: 0 0 8px #f00; }
+  .horror-theme .intersection.white { background: #ccc; border-color: #500; }
+  
+  /* Эффект виньетки и дрожания */
+  .board-container {
+    transition: filter 2s ease;
+    animation: breathe 4s infinite ease-in-out;
+  }
+  
+  @keyframes breathe {
+    0%, 100% { filter: contrast(1) brightness(1); }
+    50% { filter: contrast(1.2) brightness(0.9); }
+  }
+
+  .board-container.shaking {
+    animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+  }
+
+  @keyframes shake {
+    10%, 90% { transform: translate3d(-1px, 0, 0); }
+    20%, 80% { transform: translate3d(2px, 0, 0); }
+    30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+    40%, 60% { transform: translate3d(4px, 0, 0); }
+  }
+
+  /* Скример */
+  #jumpscare-overlay {
+    position: fixed; /* Было absolute, меняем на fixed */
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: #000; 
+    display: none; 
+    justify-content: center; 
+    align-items: center;
+    z-index: 9999; /* Увеличиваем z-index */
+  }
+
+  #jumpscare-img { 
+    max-width: 100%; 
+    max-height: 100%; 
+    object-fit: contain;
+    border: none;
+  }
+
+  /* Модалка */
+  .tired-modal {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center;
+    z-index: 200;
+  }
+  .tired-modal.visible { display: flex; }
+  .modal-content {
+    background: #220000; padding: 30px; border: 2px solid #f00; border-radius: 10px; text-align: center; color: #fff;
+  }
+  .modal-buttons { display: flex; gap: 15px; justify-content: center; margin-top: 20px; }
+
+  /* --- СТАНДАРТНЫЕ СТИЛИ (адаптированные) --- */
+  .game-wrapper { max-width: 1100px; margin: 0 auto; padding: 15px; text-align: center; position: relative; }
+  .game-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px; }
+  .settings-row { display: flex; align-items: center; gap: 10px; }
+  .form-select { padding: 5px; border-radius: 4px; border: 1px solid #555; background: #333; color: #fff; font-size: 15px; }
+  .control-buttons { display: flex; gap: 8px; }
+  
+  .board-scroll-wrapper { overflow: auto; max-width: 100%; display: flex; justify-content: center; }
+  .board-container { padding: 18px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); display: inline-block; max-width: 95vw; position: relative; }
+  
+  .board { display: grid; grid-template-columns: repeat(var(--board-size, 9), 32px); grid-template-rows: repeat(var(--board-size, 9), 32px); gap: 0; position: relative; }
+  .intersection { width: 32px; height: 32px; border-radius: 50%; cursor: pointer; position: relative; z-index: 2; transition: transform 0.1s; }
+  .intersection:hover { transform: scale(1.15); }
+  .intersection.disabled { cursor: not-allowed; opacity: 0.7; }
+  
+  .board::before {
+    content: ""; position: absolute; top: 18px; left: 18px; right: 18px; bottom: 18px;
+    background-image: linear-gradient(#444 1px, transparent 1px), linear-gradient(90deg, #444 1px, transparent 1px);
+    background-size: 32px 32px; pointer-events: none; z-index: 1;
+  }
+  .intersection.star-point::after { content: ""; position: absolute; width: 5px; height: 5px; background: #888; border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 0; }
+
+  .game-info { margin-top: 12px; }
+  .prisoners { display: flex; justify-content: space-around; background: #200; padding: 8px; border-radius: 6px; margin-bottom: 8px; font-size: 0.95rem; color: #ccc; }
+  .scoreboard { background: #1a0505; padding: 12px; border-radius: 8px; margin-top: 12px; text-align: left; color: #ddd; border: 1px solid #400; }
+  .scoreboard.hidden { display: none; }
+  .score-row { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px dashed #400; font-size: 0.95rem; }
+  .winner { font-size: 1.2rem; font-weight: bold; margin-top: 8px; color: #f44; text-align: center; }
+  .message { margin-top: 8px; color: #ff4444; font-weight: bold; min-height: 20px; font-size: 0.95rem; text-shadow: 0 0 5px #f00; }
+  .btn { padding: 7px 14px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; text-decoration: none; display: inline-block; }
+  .btn-danger { background: #a00; color: white; }
+  .btn-warning { background: #fa0; color: #000; }
+  .btn-outline { background: transparent; border: 1px solid #666; color: #ccc; }
+  .btn-secondary { background: #444; color: white; }
+  .btn:hover { opacity: 0.9; }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // --- КОНФИГУРАЦИЯ ХОРРОРА ---
+  const scareImages = [
+    '/horror/images/scare1.jpg',
+    '/horror/images/scare2.jpg',
+    '/horror/images/scare3.jpg'
+  ];
+  
+  let BOARD_SIZE = 9;
+  const EMPTY = 0, BLACK = 1, WHITE = 2;
+  
+  let board = [];
+  let currentTurn = BLACK;
+  let prisoners = { [BLACK]: 0, [WHITE]: 0 };
+  let passCount = 0;
+  let gameOver = false;
+  let lastBoardState = null;
+  let territoryMap = null;
+  
+  // Состояние хоррора
+  let horrorState = {
+    intensity: 0,
+    lastScareTime: 0
+  };
+
+  const boardEl = document.getElementById('board');
+  const statusEl = document.getElementById('status');
+  const capturedByBlackEl = document.getElementById('captured-by-black');
+  const capturedByWhiteEl = document.getElementById('captured-by-white');
+  const scoreboardEl = document.getElementById('scoreboard');
+  const scoreDetailsEl = document.getElementById('score-details');
+  const winnerEl = document.getElementById('winner-announcement');
+  const messageEl = document.getElementById('message');
+  const sizeSelect = document.getElementById('board-size');
+  
+  // Аудио элементы
+  const audioBg = document.getElementById('audio-bg');
+  const audioScream = document.getElementById('audio-scream');
+  const audioStone = document.getElementById('audio-stone');
+  const audioEnd = document.getElementById('audio-end');
+
+  // Запуск фоновой музыки (браузеры требуют взаимодействия для старта аудио)
+  document.addEventListener('click', () => {
+    if (audioBg.paused && !gameOver) audioBg.play().catch(e => console.log("Audio play failed", e));
+  }, { once: true });
+
+  function isStarPoint(x, y, size) {
+    const points = [];
+    if (size === 9) points.push('2,2', '2,6', '4,4', '6,2', '6,6');
+    else if (size === 13) points.push('3,3', '3,9', '6,6', '9,3', '9,9');
+    else if (size === 19) points.push('3,3', '3,9', '3,15', '9,3', '9,9', '9,15', '15,3', '15,9', '15,15');
+    return points.includes(`${x},${y}`);
+  }
+
+  function initBoard() {
+    boardEl.innerHTML = '';
+    document.documentElement.style.setProperty('--board-size', BOARD_SIZE);
+    for (let y = 0; y < BOARD_SIZE; y++) {
+      for (let x = 0; x < BOARD_SIZE; x++) {
+        const cell = document.createElement('div');
+        cell.className = 'intersection';
+        cell.dataset.x = x; cell.dataset.y = y;
+        if (isStarPoint(x, y, BOARD_SIZE)) cell.classList.add('star-point');
+        cell.addEventListener('click', () => handlePlace(x, y));
+        boardEl.appendChild(cell);
+      }
+    }
+    updateUI();
+    scoreboardEl.classList.add('hidden');
+    territoryMap = null;
+    updateHorrorIntensity();
+  }
+
+  function resetGame() {
+    board = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(EMPTY));
+    currentTurn = BLACK;
+    prisoners = { [BLACK]: 0, [WHITE]: 0 };
+    passCount = 0;
+    gameOver = false;
+    lastBoardState = null;
+    territoryMap = null;
+    horrorState = { intensity: 0, lastScareTime: 0 };
+    scoreboardEl.classList.add('hidden');
+    winnerEl.textContent = "";
+    document.getElementById('tired-modal').classList.remove('visible');
+    document.getElementById('jumpscare-overlay').style.display = 'none';
+    showMessage("");
+    if(audioBg.paused) audioBg.play().catch(e=>{});
+    audioBg.currentTime = 0;
+    initBoard();
+  }
+
+  // --- ХОРРОР ЛОГИКА ---
+  function updateHorrorIntensity() {
+    // Интенсивность растет с каждым ходом (максимум 1.0)
+    const movesCount = board.flat().filter(c => c !== EMPTY).length;
+    horrorState.intensity = Math.min(1.0, movesCount / 80);
+    
+    // Визуальные эффекты
+    const boardContainer = document.querySelector('.board-container');
+    if (boardContainer) {
+      const darkness = 0.5 + (horrorState.intensity * 0.5);
+      boardContainer.style.filter = `brightness(${1 - horrorState.intensity * 0.3}) contrast(${1 + horrorState.intensity * 0.2})`;
+    }
+    
+    // Аудио эффекты (громкость фона растет)
+    if (audioBg) {
+      audioBg.volume = 0.1 + (horrorState.intensity * 0.5);
+    }
+  }
+
+  function triggerJumpScare() {
+    const now = Date.now();
+    if (now - horrorState.lastScareTime < 3000) return;
+  
+    horrorState.lastScareTime = now;
+  
+    const randomImg = scareImages[Math.floor(Math.random() * scareImages.length)];
+    const overlay = document.getElementById('jumpscare-overlay');
+    const img = document.getElementById('jumpscare-img');
+
+    
+    img.src = randomImg;
+  
+    overlay.style.display = 'flex';
+    
+    // Тряска доски
+    document.querySelector('.board-container').classList.add('shaking');
+    
+    // Звук
+    if (audioScream) {
+      audioScream.currentTime = 0;
+      audioScream.play().catch(e => console.log("Scream play failed", e));
+    }
+    
+    // Убираем через 600мс
+    setTimeout(() => {
+      overlay.style.display = 'none';
+      document.querySelector('.board-container').classList.remove('shaking');
+    }, 600);
+  }
+
+  function handlePlace(x, y) {
+    if (gameOver || board[y][x] !== EMPTY) return;
+    
+    const opponent = currentTurn === BLACK ? WHITE : BLACK;
+    board[y][x] = currentTurn;
+    
+    // Звук хода
+    if (audioStone) {
+      audioStone.volume = 0.5;
+      audioStone.currentTime = 0;
+      audioStone.play().catch(e=>{});
+    }
+
+    const capturedGroups = getCapturedGroups(x, y, opponent);
+    
+    // Проверка самоубийства
+    if (capturedGroups.length === 0 && !hasLiberties(x, y)) {
+      board[y][x] = EMPTY;
+      showMessage("❌ САМОУБИЙСТВО! 😱");
+      triggerJumpScare(); // Скример за ошибку
+      return;
+    }
+    
+    const currentState = boardToString();
+    if (currentState === lastBoardState) {
+      board[y][x] = EMPTY;
+      showMessage("⚠️ Правило Ко!");
+      return;
+    }
+    
+    // Если захватили камни -> Скример!
+    if (capturedGroups.length > 0) {
+      triggerJumpScare();
+    }
+    
+    capturedGroups.forEach(group => {
+      group.forEach(([gx, gy]) => {
+        board[gy][gx] = EMPTY;
+        prisoners[currentTurn]++;
+      });
+    });
+    
+    lastBoardState = boardToString();
+    passCount = 0;
+    currentTurn = opponent;
+    showMessage("");
+    updateUI();
+    updateHorrorIntensity();
+    checkGameEnd();
+  }
+
+  // ... (Остальная логика игры getGroup, hasLiberties, getCapturedGroups, calculateScore такая же, как в normal) ...
+  
+  function getGroup(x, y, color) {
+    const group = []; const visited = new Set(); const queue = [[x, y]];
+    visited.add(`${x},${y}`);
+    while (queue.length > 0) {
+      const [cx, cy] = queue.shift(); group.push([cx, cy]);
+      const dirs = [[0,1],[0,-1],[1,0],[-1,0]];
+      for (const [dx, dy] of dirs) {
+        const nx = cx + dx, ny = cy + dy;
+        if (nx >= 0 && nx < BOARD_SIZE && ny >= 0 && ny < BOARD_SIZE) {
+          if (board[ny][nx] === color && !visited.has(`${nx},${ny}`)) {
+            visited.add(`${nx},${ny}`); queue.push([nx, ny]);
+          }
+        }
+      }
+    }
+    return group;
+  }
+
+  function hasLiberties(x, y) {
+    const group = getGroup(x, y, board[y][x]);
+    return group.some(([gx, gy]) => {
+      const dirs = [[0,1],[0,-1],[1,0],[-1,0]];
+      return dirs.some(([dx, dy]) => {
+        const nx = gx + dx, ny = gy + dy;
+        return nx >= 0 && nx < BOARD_SIZE && ny >= 0 && ny < BOARD_SIZE && board[ny][nx] === EMPTY;
+      });
+    });
+  }
+
+  function getCapturedGroups(x, y, opponentColor) {
+    const captured = []; const dirs = [[0,1],[0,-1],[1,0],[-1,0]];
+    for (const [dx, dy] of dirs) {
+      const nx = x + dx, ny = y + dy;
+      if (nx >= 0 && nx < BOARD_SIZE && ny >= 0 && ny < BOARD_SIZE) {
+        if (board[ny][nx] === opponentColor && !hasLiberties(nx, ny)) {
+          const group = getGroup(nx, ny, opponentColor);
+          const isDup = captured.some(g => g.length === group.length && g.every(([a,b], i) => a === group[i][0] && b === group[i][1]));
+          if (!isDup) captured.push(group);
+        }
+      }
+    }
+    return captured;
+  }
+
+  function boardToString() { return board.map(row => row.join('')).join(''); }
+
+  function calculateScore() {
+    const visited = new Set(); let blackTerritory = 0, whiteTerritory = 0; const tMap = {};
+    for (let y = 0; y < BOARD_SIZE; y++) {
+      for (let x = 0; x < BOARD_SIZE; x++) {
+        if (board[y][x] === EMPTY && !visited.has(`${x},${y}`)) {
+          const region = []; const queue = [[x, y]]; visited.add(`${x},${y}`);
+          let touchesBlack = false, touchesWhite = false;
+          while (queue.length > 0) {
+            const [cx, cy] = queue.shift(); region.push([cx, cy]);
+            const dirs = [[0,1],[0,-1],[1,0],[-1,0]];
+            for (const [dx, dy] of dirs) {
+              const nx = cx + dx, ny = cy + dy;
+              if (nx >= 0 && nx < BOARD_SIZE && ny >= 0 && ny < BOARD_SIZE) {
+                if (board[ny][nx] === EMPTY) {
+                  if (!visited.has(`${nx},${ny}`)) { visited.add(`${nx},${ny}`); queue.push([nx, ny]); }
+                } else if (board[ny][nx] === BLACK) touchesBlack = true;
+                else if (board[ny][nx] === WHITE) touchesWhite = true;
+              }
+            }
+          }
+          if (touchesBlack && !touchesWhite) {
+            blackTerritory += region.length; region.forEach(([rx, ry]) => tMap[`${rx},${ry}`] = 'black');
+          } else if (touchesWhite && !touchesBlack) {
+            whiteTerritory += region.length; region.forEach(([rx, ry]) => tMap[`${rx},${ry}`] = 'white');
+          }
+        }
+      }
+    }
+    const KOMI = 6.5;
+    return { 
+      blackScore: blackTerritory + prisoners[BLACK], 
+      whiteScore: whiteTerritory + prisoners[WHITE] + KOMI, 
+      blackTerritory, whiteTerritory, territoryMap: tMap 
+    };
+  }
+
+  function updateUI() {
+    document.querySelectorAll('.intersection').forEach(cell => {
+      const x = parseInt(cell.dataset.x), y = parseInt(cell.dataset.y);
+      cell.className = 'intersection';
+      if (isStarPoint(x, y, BOARD_SIZE)) cell.classList.add('star-point');
+      if (board[y][x] === BLACK) cell.classList.add('black');
+      if (board[y][x] === WHITE) cell.classList.add('white');
+      if (!gameOver) return;
+      const key = `${x},${y}`;
+      if (territoryMap && territoryMap[key]) cell.classList.add(`territory-${territoryMap[key]}`);
+    });
+    statusEl.textContent = gameOver ? "🏁 ИГРА ОКОНЧЕНА!" : `Ход: ${currentTurn === BLACK ? 'Чёрные ' : 'Белые '}`;
+    capturedByBlackEl.textContent = prisoners[BLACK];
+    capturedByWhiteEl.textContent = prisoners[WHITE];
+  }
+
+  function checkGameEnd() {
+    if (passCount >= 2) {
+      gameOver = true;
+      const scores = calculateScore();
+      territoryMap = scores.territoryMap;
+      scoreDetailsEl.innerHTML = `
+        <div class="score-row"><span>⚫ Территория:</span> <strong>${scores.blackTerritory}</strong></div>
+        <div class="score-row"><span>⚪ Пленные белые:</span> <strong>${prisoners[BLACK]}</strong></div>
+        <div class="score-row" style="font-weight:bold"><span> Итого:</span> <strong>${scores.blackScore}</strong></div>
+        <hr>
+        <div class="score-row"><span>⚪ Территория:</span> <strong>${scores.whiteTerritory}</strong></div>
+        <div class="score-row"><span>⚫ Пленные чёрные:</span> <strong>${prisoners[WHITE]}</strong></div>
+        <div class="score-row"><span> Коми:</span> <strong>6.5</strong></div>
+        <div class="score-row" style="font-weight:bold"><span> Итого:</span> <strong>${scores.whiteScore}</strong></div>
+      `;
+      const winner = scores.blackScore > scores.whiteScore ? "Чёрные" : "Белые";
+      winnerEl.textContent = `🏆 Победили: ${winner}!`;
+      scoreboardEl.classList.remove('hidden');
+      document.querySelectorAll('.intersection').forEach(c => c.classList.add('disabled'));
+      updateUI();
+      
+      // Хоррор логика окончания
+      if (audioEnd) audioEnd.play();
+      setTimeout(() => {
+        document.getElementById('tired-modal').classList.add('visible');
+      }, 1500); // Показать модалку через 1.5 сек после конца
+    }
+  }
+
+  function showMessage(msg) {
+    messageEl.textContent = msg;
+    setTimeout(() => { if (messageEl.textContent === msg) messageEl.textContent = ""; }, 2500);
+  }
+
+  // Кнопки
+  sizeSelect.addEventListener('change', (e) => { BOARD_SIZE = parseInt(e.target.value); resetGame(); });
+  
+  document.getElementById('pass-btn').addEventListener('click', () => {
+    if (gameOver) return;
+    passCount++;
+    currentTurn = currentTurn === BLACK ? WHITE : BLACK;
+    updateUI(); checkGameEnd();
+    showMessage("⏭️ Пас...");
+  });
+
+  document.getElementById('reset-btn').addEventListener('click', () => { resetGame(); });
+
+  // Закрытие модалки
+  window.closeTiredModal = function() {
+    document.getElementById('tired-modal').classList.remove('visible');
+  }
+
+  resetGame();
+});
+</script>

@@ -1,6 +1,6 @@
 <%# app/views/games/local_normal.html.erb %>
 <div class="game-wrapper" data-turbo="false">
-  <h1>🎮 Игра на одном устройстве</h1>
+  <h1> Игра: Обычный режим</h1>
   
   <div class="game-header">
     <div class="settings-row">
@@ -29,7 +29,7 @@
   <div class="game-info">
     <div class="prisoners">
       <span>⚫ Пленных белых: <strong id="captured-by-black">0</strong></span>
-      <span> Пленных чёрных: <strong id="captured-by-white">0</strong></span>
+      <span>⚪ Пленных чёрных: <strong id="captured-by-white">0</strong></span>
     </div>
     
     <div id="scoreboard" class="scoreboard hidden">
@@ -295,7 +295,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const key = `${x},${y}`;
       if (territoryMap && territoryMap[key]) cell.classList.add(`territory-${territoryMap[key]}`);
     });
-    statusEl.textContent = gameOver ? "🏁 Игра окончена!" : `Ход: ${currentTurn === BLACK ? 'Чёрные ' : 'Белые ⚪'}`;
+    statusEl.textContent = gameOver ? "🏁 Игра окончена!" : `Ход: ${currentTurn === BLACK ? 'Чёрные ⚫' : 'Белые ⚪'}`;
     capturedByBlackEl.textContent = prisoners[BLACK];
     capturedByWhiteEl.textContent = prisoners[WHITE];
   }
@@ -312,7 +312,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <hr>
         <div class="score-row"><span>⚪ Территория белых:</span> <strong>${scores.whiteTerritory}</strong></div>
         <div class="score-row"><span>⚫ Пленные чёрные:</span> <strong>${prisoners[WHITE]}</strong></div>
-        <div class="score-row"><span>🎁 Коми:</span> <strong>6.5</strong></div>
+        <div class="score-row"><span> Коми:</span> <strong>6.5</strong></div>
         <div class="score-row" style="font-weight:bold"><span> Итого белые:</span> <strong>${scores.whiteScore}</strong></div>
       `;
       const winner = scores.blackScore > scores.whiteScore ? "Чёрные" : "Белые";
