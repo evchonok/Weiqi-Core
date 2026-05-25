@@ -1,3 +1,348 @@
-<h1>Игра на одном устройстве — Обычный режим</h1>
-<p>Здесь будет игровое поле</p>
-<%= link_to "← Выйти в меню", game_local_modes_path, class: "btn btn-outline" %>
+<%# app/views/games/local_normal.html.erb %>
+<div class="game-wrapper" data-turbo="false">
+  <h1>🎮 Игра на одном устройстве</h1>
+  
+  <div class="game-header">
+    <div class="settings-row">
+      <label for="board-size">Размер доски:</label>
+      <select id="board-size" class="form-select">
+        <option value="9" selected>9x9 (Обучение)</option>
+        <option value="13">13x13 (Быстрая)</option>
+        <option value="19">19x19 (Классика)</option>
+      </select>
+    </div>
+    
+    <div id="status" class="status">Ход: Чёрные ⚫</div>
+    <div class="control-buttons">
+      <button id="pass-btn" class="btn btn-secondary">Пас</button>
+      <button id="reset-btn" class="btn btn-outline">Сброс</button>
+      <%= link_to "← В меню", game_local_modes_path, class: "btn btn-secondary" %>
+    </div>
+  </div>
+
+  <div class="board-scroll-wrapper">
+    <div class="board-container">
+      <div id="board" class="board"></div>
+    </div>
+  </div>
+
+  <div class="game-info">
+    <div class="prisoners">
+      <span>⚫ Пленных белых: <strong id="captured-by-black">0</strong></span>
+      <span> Пленных чёрных: <strong id="captured-by-white">0</strong></span>
+    </div>
+    
+    <div id="scoreboard" class="scoreboard hidden">
+      <h3>📊 Подсчёт очков</h3>
+      <div id="score-details"></div>
+      <div id="winner-announcement" class="winner"></div>
+    </div>
+    <div id="message" class="message"></div>
+  </div>
+</div>
+
+<style>
+  .game-wrapper { max-width: 1100px; margin: 0 auto; padding: 15px; text-align: center; }
+  .game-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px; }
+  .settings-row { display: flex; align-items: center; gap: 10px; }
+  .form-select { padding: 5px; border-radius: 4px; border: 1px solid #ccc; font-size: 15px; }
+  .status { font-size: 1.1rem; font-weight: bold; background: #f5f5f5; padding: 8px 14px; border-radius: 8px; }
+  .control-buttons { display: flex; gap: 8px; }
+  
+  .board-scroll-wrapper { overflow: auto; max-width: 100%; display: flex; justify-content: center; }
+  .board-container { 
+    background: #e8c37a; 
+    padding: 18px; 
+    border-radius: 8px; 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2); 
+    display: inline-block; 
+    max-width: 95vw; /* Не шире экрана */
+  }
+  
+  .board { 
+    display: grid; 
+    grid-template-columns: repeat(var(--board-size, 9), 32px); 
+    grid-template-rows: repeat(var(--board-size, 9), 32px); 
+    gap: 0; 
+    position: relative; 
+  }
+  
+  .intersection { width: 32px; height: 32px; border-radius: 50%; cursor: pointer; position: relative; z-index: 2; transition: transform 0.1s; }
+  .intersection:hover { transform: scale(1.15); }
+  .intersection.black { background: #222; box-shadow: 1px 1px 3px rgba(0,0,0,0.5); }
+  .intersection.white { background: #fff; border: 1px solid #bbb; box-shadow: 1px 1px 3px rgba(0,0,0,0.2); }
+  .intersection.disabled { cursor: not-allowed; opacity: 0.7; }
+  .intersection.territory-black { box-shadow: 0 0 0 3px rgba(0,0,0,0.4); }
+  .intersection.territory-white { box-shadow: 0 0 0 3px rgba(255,255,255,0.9); }
+  
+  .board::before {
+    content: ""; position: absolute; top: 18px; left: 18px; right: 18px; bottom: 18px;
+    background-image: linear-gradient(#333 1px, transparent 1px), linear-gradient(90deg, #333 1px, transparent 1px);
+    background-size: 32px 32px; pointer-events: none; z-index: 1;
+  }
+  
+  .intersection.star-point::after {
+    content: ""; position: absolute; width: 5px; height: 5px; background: #333; border-radius: 50%;
+    top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 0;
+  }
+
+  .game-info { margin-top: 12px; }
+  .prisoners { display: flex; justify-content: space-around; background: #f9f9f9; padding: 8px; border-radius: 6px; margin-bottom: 8px; font-size: 0.95rem; }
+  .scoreboard { background: #f0f4f8; padding: 12px; border-radius: 8px; margin-top: 12px; text-align: left; }
+  .scoreboard.hidden { display: none; }
+  .score-row { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px dashed #ccc; font-size: 0.95rem; }
+  .winner { font-size: 1.2rem; font-weight: bold; margin-top: 8px; color: #2e7d32; text-align: center; }
+  .message { margin-top: 8px; color: #d32f2f; font-weight: bold; min-height: 20px; font-size: 0.95rem; }
+  .btn { padding: 7px 14px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; }
+  .btn-secondary { background: #6c757d; color: white; }
+  .btn-outline { background: transparent; border: 1px solid #6c757d; color: #6c757d; }
+  .btn:hover { opacity: 0.9; }
+  
+  /* Адаптив для маленьких экранов */
+  @media (max-width: 768px) {
+    .board { grid-template-columns: repeat(var(--board-size, 9), 28px); grid-template-rows: repeat(var(--board-size, 9), 28px); }
+    .intersection { width: 28px; height: 28px; }
+    .board::before { background-size: 28px 28px; top: 14px; left: 14px; right: 14px; bottom: 14px; }
+    .intersection.star-point::after { width: 4px; height: 4px; }
+  }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  let BOARD_SIZE = 9;
+  const EMPTY = 0, BLACK = 1, WHITE = 2;
+  
+  let board = [];
+  let currentTurn = BLACK;
+  let prisoners = { [BLACK]: 0, [WHITE]: 0 };
+  let passCount = 0;
+  let gameOver = false;
+  let lastBoardState = null;
+  let territoryMap = null;
+
+  const boardEl = document.getElementById('board');
+  const statusEl = document.getElementById('status');
+  const capturedByBlackEl = document.getElementById('captured-by-black');
+  const capturedByWhiteEl = document.getElementById('captured-by-white');
+  const scoreboardEl = document.getElementById('scoreboard');
+  const scoreDetailsEl = document.getElementById('score-details');
+  const winnerEl = document.getElementById('winner-announcement');
+  const messageEl = document.getElementById('message');
+  const sizeSelect = document.getElementById('board-size');
+
+  function isStarPoint(x, y, size) {
+    const points = [];
+    if (size === 9) points.push('2,2', '2,6', '4,4', '6,2', '6,6');
+    else if (size === 13) points.push('3,3', '3,9', '6,6', '9,3', '9,9');
+    else if (size === 19) points.push('3,3', '3,9', '3,15', '9,3', '9,9', '9,15', '15,3', '15,9', '15,15');
+    return points.includes(`${x},${y}`);
+  }
+
+  function initBoard() {
+    boardEl.innerHTML = '';
+    document.documentElement.style.setProperty('--board-size', BOARD_SIZE);
+    
+    for (let y = 0; y < BOARD_SIZE; y++) {
+      for (let x = 0; x < BOARD_SIZE; x++) {
+        const cell = document.createElement('div');
+        cell.className = 'intersection';
+        cell.dataset.x = x;
+        cell.dataset.y = y;
+        if (isStarPoint(x, y, BOARD_SIZE)) cell.classList.add('star-point');
+        cell.addEventListener('click', () => handlePlace(x, y));
+        boardEl.appendChild(cell);
+      }
+    }
+    updateUI();
+    scoreboardEl.classList.add('hidden');
+    territoryMap = null;
+  }
+
+  function resetGame() {
+    board = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(EMPTY));
+    currentTurn = BLACK;
+    prisoners = { [BLACK]: 0, [WHITE]: 0 };
+    passCount = 0;
+    gameOver = false;
+    lastBoardState = null;
+    territoryMap = null;
+    scoreboardEl.classList.add('hidden');
+    winnerEl.textContent = "";
+    showMessage("");
+    initBoard();
+  }
+
+  function handlePlace(x, y) {
+    if (gameOver || board[y][x] !== EMPTY) return;
+    const opponent = currentTurn === BLACK ? WHITE : BLACK;
+    board[y][x] = currentTurn;
+    const capturedGroups = getCapturedGroups(x, y, opponent);
+    if (capturedGroups.length === 0 && !hasLiberties(x, y)) {
+      board[y][x] = EMPTY;
+      showMessage("❌ Самоубийственный ход запрещён!");
+      return;
+    }
+    const currentState = boardToString();
+    if (currentState === lastBoardState) {
+      board[y][x] = EMPTY;
+      showMessage("️ Нарушено правило Ко!");
+      return;
+    }
+    capturedGroups.forEach(group => {
+      group.forEach(([gx, gy]) => {
+        board[gy][gx] = EMPTY;
+        prisoners[currentTurn]++;
+      });
+    });
+    lastBoardState = boardToString();
+    passCount = 0;
+    currentTurn = opponent;
+    showMessage("");
+    updateUI();
+    checkGameEnd();
+  }
+
+  function getGroup(x, y, color) {
+    const group = []; const visited = new Set(); const queue = [[x, y]];
+    visited.add(`${x},${y}`);
+    while (queue.length > 0) {
+      const [cx, cy] = queue.shift(); group.push([cx, cy]);
+      const dirs = [[0,1],[0,-1],[1,0],[-1,0]];
+      for (const [dx, dy] of dirs) {
+        const nx = cx + dx, ny = cy + dy;
+        if (nx >= 0 && nx < BOARD_SIZE && ny >= 0 && ny < BOARD_SIZE) {
+          if (board[ny][nx] === color && !visited.has(`${nx},${ny}`)) {
+            visited.add(`${nx},${ny}`); queue.push([nx, ny]);
+          }
+        }
+      }
+    }
+    return group;
+  }
+
+  function hasLiberties(x, y) {
+    const group = getGroup(x, y, board[y][x]);
+    return group.some(([gx, gy]) => {
+      const dirs = [[0,1],[0,-1],[1,0],[-1,0]];
+      return dirs.some(([dx, dy]) => {
+        const nx = gx + dx, ny = gy + dy;
+        return nx >= 0 && nx < BOARD_SIZE && ny >= 0 && ny < BOARD_SIZE && board[ny][nx] === EMPTY;
+      });
+    });
+  }
+
+  function getCapturedGroups(x, y, opponentColor) {
+    const captured = []; const dirs = [[0,1],[0,-1],[1,0],[-1,0]];
+    for (const [dx, dy] of dirs) {
+      const nx = x + dx, ny = y + dy;
+      if (nx >= 0 && nx < BOARD_SIZE && ny >= 0 && ny < BOARD_SIZE) {
+        if (board[ny][nx] === opponentColor && !hasLiberties(nx, ny)) {
+          const group = getGroup(nx, ny, opponentColor);
+          const isDup = captured.some(g => g.length === group.length && g.every(([a,b], i) => a === group[i][0] && b === group[i][1]));
+          if (!isDup) captured.push(group);
+        }
+      }
+    }
+    return captured;
+  }
+
+  function boardToString() { return board.map(row => row.join('')).join(''); }
+
+  function calculateScore() {
+    const visited = new Set(); let blackTerritory = 0, whiteTerritory = 0; const tMap = {};
+    for (let y = 0; y < BOARD_SIZE; y++) {
+      for (let x = 0; x < BOARD_SIZE; x++) {
+        if (board[y][x] === EMPTY && !visited.has(`${x},${y}`)) {
+          const region = []; const queue = [[x, y]]; visited.add(`${x},${y}`);
+          let touchesBlack = false, touchesWhite = false;
+          while (queue.length > 0) {
+            const [cx, cy] = queue.shift(); region.push([cx, cy]);
+            const dirs = [[0,1],[0,-1],[1,0],[-1,0]];
+            for (const [dx, dy] of dirs) {
+              const nx = cx + dx, ny = cy + dy;
+              if (nx >= 0 && nx < BOARD_SIZE && ny >= 0 && ny < BOARD_SIZE) {
+                if (board[ny][nx] === EMPTY) {
+                  if (!visited.has(`${nx},${ny}`)) { visited.add(`${nx},${ny}`); queue.push([nx, ny]); }
+                } else if (board[ny][nx] === BLACK) touchesBlack = true;
+                else if (board[ny][nx] === WHITE) touchesWhite = true;
+              }
+            }
+          }
+          if (touchesBlack && !touchesWhite) {
+            blackTerritory += region.length; region.forEach(([rx, ry]) => tMap[`${rx},${ry}`] = 'black');
+          } else if (touchesWhite && !touchesBlack) {
+            whiteTerritory += region.length; region.forEach(([rx, ry]) => tMap[`${rx},${ry}`] = 'white');
+          }
+        }
+      }
+    }
+    const KOMI = 6.5;
+    return { 
+      blackScore: blackTerritory + prisoners[BLACK], 
+      whiteScore: whiteTerritory + prisoners[WHITE] + KOMI, 
+      blackTerritory, whiteTerritory, territoryMap: tMap 
+    };
+  }
+
+  function updateUI() {
+    document.querySelectorAll('.intersection').forEach(cell => {
+      const x = parseInt(cell.dataset.x), y = parseInt(cell.dataset.y);
+      cell.className = 'intersection';
+      if (isStarPoint(x, y, BOARD_SIZE)) cell.classList.add('star-point');
+      if (board[y][x] === BLACK) cell.classList.add('black');
+      if (board[y][x] === WHITE) cell.classList.add('white');
+      if (!gameOver) return;
+      const key = `${x},${y}`;
+      if (territoryMap && territoryMap[key]) cell.classList.add(`territory-${territoryMap[key]}`);
+    });
+    statusEl.textContent = gameOver ? "🏁 Игра окончена!" : `Ход: ${currentTurn === BLACK ? 'Чёрные ' : 'Белые ⚪'}`;
+    capturedByBlackEl.textContent = prisoners[BLACK];
+    capturedByWhiteEl.textContent = prisoners[WHITE];
+  }
+
+  function checkGameEnd() {
+    if (passCount >= 2) {
+      gameOver = true;
+      const scores = calculateScore();
+      territoryMap = scores.territoryMap;
+      scoreDetailsEl.innerHTML = `
+        <div class="score-row"><span>⚫ Территория чёрных:</span> <strong>${scores.blackTerritory}</strong></div>
+        <div class="score-row"><span>⚪ Пленные белые:</span> <strong>${prisoners[BLACK]}</strong></div>
+        <div class="score-row" style="font-weight:bold"><span> Итого чёрные:</span> <strong>${scores.blackScore}</strong></div>
+        <hr>
+        <div class="score-row"><span>⚪ Территория белых:</span> <strong>${scores.whiteTerritory}</strong></div>
+        <div class="score-row"><span>⚫ Пленные чёрные:</span> <strong>${prisoners[WHITE]}</strong></div>
+        <div class="score-row"><span>🎁 Коми:</span> <strong>6.5</strong></div>
+        <div class="score-row" style="font-weight:bold"><span> Итого белые:</span> <strong>${scores.whiteScore}</strong></div>
+      `;
+      const winner = scores.blackScore > scores.whiteScore ? "Чёрные" : "Белые";
+      winnerEl.textContent = `🏆 Победили: ${winner}!`;
+      scoreboardEl.classList.remove('hidden');
+      document.querySelectorAll('.intersection').forEach(c => c.classList.add('disabled'));
+      updateUI();
+    }
+  }
+
+  function showMessage(msg) {
+    messageEl.textContent = msg;
+    setTimeout(() => { if (messageEl.textContent === msg) messageEl.textContent = ""; }, 2500);
+  }
+
+  sizeSelect.addEventListener('change', (e) => {
+    BOARD_SIZE = parseInt(e.target.value);
+    resetGame();
+  });
+
+  document.getElementById('pass-btn').addEventListener('click', () => {
+    if (gameOver) return;
+    passCount++;
+    currentTurn = currentTurn === BLACK ? WHITE : BLACK;
+    updateUI(); checkGameEnd();
+    showMessage("⏭️ Пас! Ход переходит.");
+  });
+
+  document.getElementById('reset-btn').addEventListener('click', () => { resetGame(); showMessage(""); });
+
+  resetGame();
+});
+</script>
