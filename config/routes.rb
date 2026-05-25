@@ -1,7 +1,4 @@
 Rails.application.routes.draw do
-  get "menu/tasks"
-  get "menu/game"
-  get "menu/minigames"
   # === Аутентификация ===
   get 'signup', to: 'users#new'
   post 'signup', to: 'users#create'
@@ -13,17 +10,23 @@ Rails.application.routes.draw do
   get 'dashboard', to: 'dashboard#index'
   
   # === Подменю ===
-  get 'tasks_menu', to: 'menu#tasks'           # Подменю задачника
-  get 'game_menu', to: 'menu#game'             # Подменю игры на двоих
-  get 'minigames_menu', to: 'menu#minigames'   # Подменю мини-игр
+  get 'tasks_menu', to: 'menu#tasks'
+  get 'game_menu', to: 'menu#game'
+  get 'minigames_menu', to: 'menu#minigames'
   
   # === Задачник ===
-  get 'tasks/normal', to: 'tasks#normal'       # Обычный режим
-  get 'tasks/horror', to: 'tasks#horror'       # Хоррор-режим
+  get 'tasks/normal', to: 'tasks#normal'
+  get 'tasks/horror', to: 'tasks#horror'
   
-  # === Игра на двоих ===
-  get 'game/local', to: 'games#local'          # На одном устройстве
-  get 'game/online', to: 'games#online'        # На двух устройствах
+  # === Игра на двоих: выбор режима ===
+  get 'game/local/modes', to: 'menu#local_modes'
+  get 'game/online/modes', to: 'menu#online_modes'
+  
+  # === Игровые режимы (пока заглушки) ===
+  get 'game/local/normal', to: 'games#local_normal'
+  get 'game/local/horror', to: 'games#local_horror'
+  get 'game/online/normal', to: 'games#online_normal'
+  get 'game/online/horror', to: 'games#online_horror'
   
   # === Мини-игры ===
   get 'minigames/tictactoe', to: 'minigames#tictactoe'
