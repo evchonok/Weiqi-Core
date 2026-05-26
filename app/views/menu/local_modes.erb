@@ -1,7 +1,26 @@
-<h1>💻 Игра на одном устройстве</h1>
+<div class="menu-page">
+  <div class="menu-container">
+    <div class="menu-header">
+      <h1>Игра на одном устройстве</h1>
+    </div>
 
-<div class="menu-buttons">
-  <%= link_to "Обычный режим", game_local_normal_path, class: "btn btn-success btn-large" %>
-  <%= link_to "Хоррор-режим", game_local_horror_path, class: "btn btn-danger btn-large" %>
-  <%= link_to "← Назад", game_menu_path, class: "btn btn-secondary btn-large" %>
+    <div class="menu-buttons-vertical">
+      <%= link_to "Обычный режим", game_local_normal_path, class: "btn-menu btn-primary" %>
+      <%= link_to "Хоррор-режим", game_local_horror_path, class: "btn-menu btn-primary" %>
+      <%= link_to "← Назад", game_menu_path, class: "btn-menu btn-secondary" %>
+    </div>
+  </div>
 </div>
+
+<style>
+  .menu-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; }
+  .menu-container { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); max-width: 400px; width: 100%; text-align: center; }
+  .menu-header { margin-bottom: 30px; }
+  .menu-header h1 { font-size: 2rem; color: #333; margin-bottom: 10px; }
+  .menu-header p { color: #666; font-size: 1.05rem; line-height: 1.5; }
+  .menu-buttons-vertical { display: flex; flex-direction: column; gap: 15px; }
+  .btn-menu { padding: 14px; border-radius: 8px; text-decoration: none; font-weight: 600; text-align: center; transition: all 0.2s; border: none; cursor: pointer; font-size: 1rem; display: block; }
+  .btn-menu:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+  .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+  .btn-secondary { background: #6c757d; color: white; }
+</style>

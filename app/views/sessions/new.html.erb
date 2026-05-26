@@ -1,20 +1,53 @@
-<div class="auth-container">
-  <h2>Вход в Weiqi Core</h2>
-  
-  <%= form_with url: login_path, method: :post, local: true do |form| %>
-    <div class="form-group">
-      <%= form.label :email, "Email" %>
-      <%= form.email_field :email, required: true, class: "form-control" %>
+<div class="auth-page">
+  <div class="auth-container">
+    <div class="auth-header">
+      <h1>Weiqi Core</h1>
+      <p class="subtitle">Вход в систему</p>
     </div>
-    
-    <div class="form-group">
-      <%= form.label :password, "Пароль" %>
-      <%= form.password_field :password, required: true, class: "form-control" %>
-    </div>
-    
-    <div class="form-actions">
-      <%= form.submit "Войти", class: "btn btn-primary" %>
-      <%= link_to "Зарегистрироваться", signup_path, class: "btn btn-secondary" %>
-    </div>
-  <% end %>
+
+    <%= form_with url: login_path, method: :post, local: true, class: "auth-form" do |form| %>
+      <% if flash[:alert] %>
+        <div class="error-messages"><%= flash[:alert] %></div>
+      <% end %>
+
+      <div class="form-group">
+        <%= form.label :email, "Email" %>
+        <%= form.email_field :email, required: true, class: "form-control", placeholder: "example@mail.ru" %>
+      </div>
+
+      <div class="form-group">
+        <%= form.label :password, "Пароль" %>
+        <%= form.password_field :password, required: true, class: "form-control", placeholder: "Введите пароль" %>
+      </div>
+
+      <div class="form-actions">
+        <%= form.submit "Войти", class: "btn btn-primary btn-large" %>
+      </div>
+
+      <div class="auth-footer">
+        <%= link_to "Нет аккаунта? Зарегистрироваться", signup_path, class: "link" %>
+      </div>
+    <% end %>
+  </div>
 </div>
+
+<style>
+  .auth-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; }
+  .auth-container { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); max-width: 450px; width: 100%; }
+  .auth-header { text-align: center; margin-bottom: 30px; }
+  .auth-header h1 { margin: 0 0 10px 0; color: #333; font-size: 2rem; }
+  .subtitle { color: #666; font-size: 1.1rem; margin: 0; }
+  .auth-form { display: flex; flex-direction: column; gap: 20px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group label { font-weight: 600; color: #444; font-size: 0.9rem; }
+  .form-control { padding: 12px 16px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem; transition: border-color 0.3s; }
+  .form-control:focus { outline: none; border-color: #667eea; }
+  .error-messages { background: #ffe6e6; border: 1px solid #ff6666; border-radius: 8px; padding: 12px; color: #cc0000; font-size: 0.9rem; text-align: center; }
+  .form-actions { margin-top: 10px; }
+  .btn-large { width: 100%; padding: 14px; font-size: 1.1rem; font-weight: 600; }
+  .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4); }
+  .auth-footer { text-align: center; margin-top: 10px; padding-top: 20px; border-top: 1px solid #e0e0e0; }
+  .link { color: #667eea; text-decoration: none; font-weight: 500; transition: color 0.3s; }
+  .link:hover { color: #764ba2; text-decoration: underline; }
+</style>
