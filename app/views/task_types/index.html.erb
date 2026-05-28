@@ -1,0 +1,27 @@
+<div class="task-page">
+  <h1> Уровень: <%= @level.name %></h1>
+  <p><%= @level.description %></p>
+
+  <div class="types-grid">
+    <% @types.each do |type| %>
+      <div class="type-card">
+        <div class="card-icon">📜</div>
+        <h3><%= type.name %></h3>
+        <p><%= truncate(type.instructions, length: 100) %></p>
+        <%= link_to "Открыть задачи", task_type_tasks_path(type), class: "btn btn-card" %>
+      </div>
+    <% end %>
+  </div>
+
+  <%= link_to "← Назад к уровням", tasks_menu_path, class: "btn-back" %>
+</div>
+
+<style>
+  .task-page { max-width: 900px; margin: 0 auto; padding: 20px; text-align: center; color: #333; }
+  .types-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 20px; }
+  .type-card { background: #f8f9fa; padding: 20px; border-radius: 12px; border: 1px solid #ddd; transition: transform 0.2s; }
+  .type-card:hover { transform: translateY(-5px); border-color: #667eea; }
+  .card-icon { font-size: 2.5rem; margin-bottom: 10px; }
+  .btn-card { display: inline-block; margin-top: 15px; padding: 8px 20px; background: #667eea; color: white; text-decoration: none; border-radius: 6px; }
+  .btn-back { display: block; margin-top: 30px; color: #666; text-decoration: none; }
+</style>

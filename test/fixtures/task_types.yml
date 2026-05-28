@@ -1,0 +1,13 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  task_level: one
+  name: MyString
+  icon_url: MyString
+  instructions: MyText
+
+two:
+  task_level: two
+  name: MyString
+  icon_url: MyString
+  instructions: MyText
