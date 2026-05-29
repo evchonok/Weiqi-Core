@@ -1,0 +1,309 @@
+<h1>🎯 Задача #<%= @task.id %></h1>
+<p>Тип: <%= @task.task_type.name %> | Очки: <%= @task.points %> | Время: <%= @task.time_limit_sec %>с</p>
+
+<!-- Заглушка для доски (подключим позже) -->
+<div class="board-placeholder" style="width: 300px; height: 300px; background: #e8b066; margin: 20px auto; display: flex; align-items: center; justify-content: center; border-radius: 8px;">
+  <p style="color: #555;">📐 Здесь будет доска Го</p>
+</div>
+
+<div class="controls">
+  <button id="check-btn" class="btn">✅ Проверить решение</button>
+  <p id="result" style="margin-top: 10px; font-weight: bold;"></p>
+</div>
+
+<%= link_to "← Назад", task_level_task_types_path(@task.task_type.task_level), class: "btn-back" %>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // === КОНФИГУРАЦИЯ ===
+  const scareImages = ['/horror/images/scare1.jpg', '/horror/images/scare2.jpg', '/horror/images/scare3.jpg'];
+  const BOARD_SIZE = 19;
+  const EMPTY = 0, BLACK = 1, WHITE = 2;
+  
+  // === СОСТОЯНИЕ ===
+  let board = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(EMPTY));
+  let userMoves = [];
+  let isChecking = false;
+  let lastBoardState = null; // Для правила Ко
+  
+  // === DOM ===
+  const boardEl = document.getElementById('board');
+  const checkBtn = document.getElementById('check-btn');
+  const resetBtn = document.getElementById('reset-btn');
+  const resultMsg = document.getElementById('result-msg');
+  const jumpscareOverlay = document.getElementById('jumpscare-overlay');
+  const jumpscareImg = document.getElementById('jumpscare-img');
+  const audioScream = document.getElementById('audio-scream');
+  
+  // === ИНИЦИАЛИЗАЦИЯ ===
+  const initialStones = <%= @initial_stones.to_json %>;
+  
+  function initBoard() {
+    boardEl.innerHTML = '';
+    document.documentElement.style.setProperty('--board-size', BOARD_SIZE);
+    
+    for (let y = 0; y < BOARD_SIZE; y++) {
+      for (let x = 0; x < BOARD_SIZE; x++) {
+        const cell = document.createElement('div');
+        cell.className = 'intersection';
+        cell.dataset.x = x;
+        cell.dataset.y = y;
+        
+        if (isStarPoint(x, y, BOARD_SIZE)) cell.classList.add('star-point');
+        
+        const stone = initialStones[`${x},${y}`];
+        if (stone) {
+          cell.classList.add(stone, 'occupied');
+          board[y][x] = stone === 'black' ? BLACK : WHITE;
+        }
+        
+        cell.addEventListener('click', () => handlePlace(x, y));
+        boardEl.appendChild(cell);
+      }
+    }
+  }
+  
+  // === ПРАВИЛА ГО ===
+  
+  // Найти группу связанных камней одного цвета
+  function getGroup(x, y, color) {
+    const group = [];
+    const visited = new Set();
+    const queue = [[x, y]];
+    visited.add(`${x},${y}`);
+    
+    while (queue.length > 0) {
+      const [cx, cy] = queue.shift();
+      group.push([cx, cy]);
+      
+      const dirs = [[0,1], [0,-1], [1,0], [-1,0]];
+      for (const [dx, dy] of dirs) {
+        const nx = cx + dx, ny = cy + dy;
+        if (nx >= 0 && nx < BOARD_SIZE && ny >= 0 && ny < BOARD_SIZE) {
+          if (board[ny][nx] === color && !visited.has(`${nx},${ny}`)) {
+            visited.add(`${nx},${ny}`);
+            queue.push([nx, ny]);
+          }
+        }
+      }
+    }
+    return group;
+  }
+  
+  // Проверить, есть ли у группы свободные точки (дамы)
+  function hasLiberties(x, y) {
+    const group = getGroup(x, y, board[y][x]);
+    const dirs = [[0,1], [0,-1], [1,0], [-1,0]];
+    
+    return group.some(([gx, gy]) => {
+      return dirs.some(([dx, dy]) => {
+        const nx = gx + dx, ny = gy + dy;
+        return nx >= 0 && nx < BOARD_SIZE && ny >= 0 && ny < BOARD_SIZE && board[ny][nx] === EMPTY;
+      });
+    });
+  }
+  
+  // Найти группы противника, которые будут захвачены этим ходом
+  function getCapturedGroups(x, y, opponentColor) {
+    const captured = [];
+    const dirs = [[0,1], [0,-1], [1,0], [-1,0]];
+    
+    for (const [dx, dy] of dirs) {
+      const nx = x + dx, ny = y + dy;
+      if (nx >= 0 && nx < BOARD_SIZE && ny >= 0 && ny < BOARD_SIZE) {
+        if (board[ny][nx] === opponentColor && !hasLiberties(nx, ny)) {
+          const group = getGroup(nx, ny, opponentColor);
+          // Проверка на дубликаты
+          const isDup = captured.some(g => 
+            g.length === group.length && 
+            g.every(([a,b], i) => a === group[i][0] && b === group[i][1])
+          );
+          if (!isDup) captured.push(group);
+        }
+      }
+    }
+    return captured;
+  }
+  
+  // Проверка на самоубийство: ход запрещён, если у камня нет дам И он не захватывает врага
+  function isSuicide(x, y, playerColor) {
+    const opponent = playerColor === BLACK ? WHITE : BLACK;
+    const captured = getCapturedGroups(x, y, opponent);
+    
+    // Если захватываем врага — ход легален
+    if (captured.length > 0) return false;
+    
+    // Иначе проверяем, есть ли дам у новой группы
+    board[y][x] = playerColor; // временно ставим для проверки
+    const hasLib = hasLiberties(x, y);
+    board[y][x] = EMPTY; // отменяем
+    
+    return !hasLib;
+  }
+  
+  // Простая проверка правила Ко (повтор позиции)
+  function isKo(x, y, playerColor) {
+    // Ставим камень временно
+    board[y][x] = playerColor;
+    const currentState = boardToString();
+    board[y][x] = EMPTY;
+    
+    return currentState === lastBoardState;
+  }
+  
+  function boardToString() {
+    return board.map(row => row.join('')).join('');
+  }
+  
+  // === ОБРАБОТКА ХОДА ===
+  function handlePlace(x, y) {
+    if (isChecking || board[y][x] !== EMPTY) return;
+    
+    // Проверка на самоубийство
+    if (isSuicide(x, y, BLACK)) {
+      showMessage("❌ Самоубийственный ход запрещён!", "error");
+      triggerJumpScare(); // Хоррор за ошибку
+      return;
+    }
+    
+    // Проверка правила Ко
+    if (isKo(x, y, BLACK)) {
+      showMessage("⚠️ Правило Ко: нельзя повторять позицию", "error");
+      return;
+    }
+    
+    // Ход легален — ставим камень
+    board[y][x] = BLACK;
+    userMoves.push(`${String.fromCharCode(65 + x)}${y + 1}`); // D4 формат
+    
+    // Визуальное обновление
+    const cell = document.querySelector(`.intersection[data-x="${x}"][data-y="${y}"]`);
+    if (cell) {
+      cell.classList.add('black', 'occupied');
+      cell.style.transform = 'scale(1.2)';
+      setTimeout(() => { cell.style.transform = ''; }, 100);
+    }
+    
+    // Если захватили вражеские камни — убираем их с доски (визуально)
+    const captured = getCapturedGroups(x, y, WHITE);
+    captured.forEach(group => {
+      group.forEach(([cx, cy]) => {
+        board[cy][cx] = EMPTY;
+        const capturedCell = document.querySelector(`.intersection[data-x="${cx}"][data-y="${cy}"]`);
+        if (capturedCell) {
+          capturedCell.classList.remove('white', 'occupied');
+        }
+      });
+    });
+    
+    // Сохраняем состояние для правила Ко
+    lastBoardState = boardToString();
+    
+    // Очищаем сообщение об ошибке
+    if (resultMsg.classList.contains('error')) {
+      resultMsg.textContent = '';
+      resultMsg.className = '';
+    }
+  }
+  
+  // === ПРОВЕРКА РЕШЕНИЯ ===
+  async function checkSolution() {
+    if (userMoves.length === 0) {
+      showMessage("⚠️ Сделай хотя бы один ход!", "error");
+      return;
+    }
+    
+    isChecking = true;
+    checkBtn.disabled = true;
+    checkBtn.textContent = '⏳ Проверяю...';
+    
+    try {
+      const response = await fetch('<%= attempt_task_path(@task) %>', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+        },
+        body: JSON.stringify({ moves: userMoves })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        showMessage(`✅ Верно! +${data.points} очков`, "success");
+        document.querySelectorAll('.intersection').forEach(c => c.classList.add('disabled'));
+      } else {
+        showMessage(`❌ ${data.error}`, "error");
+        if (data.horror) triggerJumpScare();
+      }
+    } catch (err) {
+      console.error('Error:', err);
+      showMessage("⚠️ Ошибка соединения", "error");
+    } finally {
+      isChecking = false;
+      checkBtn.disabled = false;
+      checkBtn.textContent = '✅ Проверить решение';
+    }
+  }
+  
+  // === ХОРРОР ===
+  function triggerJumpScare() {
+    const randomImg = scareImages[Math.floor(Math.random() * scareImages.length)];
+    jumpscareImg.src = randomImg;
+    jumpscareOverlay.style.display = 'flex';
+    
+    document.querySelector('.board-container').classList.add('shaking');
+    
+    if (audioScream) {
+      audioScream.currentTime = 0;
+      audioScream.play().catch(e => console.log("Scream play failed", e));
+    }
+    
+    setTimeout(() => {
+      jumpscareOverlay.style.display = 'none';
+      document.querySelector('.board-container').classList.remove('shaking');
+    }, 600);
+  }
+  
+  function showMessage(text, type) {
+    resultMsg.textContent = text;
+    resultMsg.className = type;
+    // Авто-скрытие через 3 секунды
+    setTimeout(() => {
+      if (resultMsg.textContent === text) {
+        resultMsg.textContent = '';
+        resultMsg.className = '';
+      }
+    }, 3000);
+  }
+  
+  // === СБРОС ===
+  function resetBoard() {
+    userMoves = [];
+    isChecking = false;
+    lastBoardState = null;
+    resultMsg.textContent = '';
+    resultMsg.className = '';
+    
+    // Пересоздаём доску с начальными камнями
+    board = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(EMPTY));
+    initBoard();
+  }
+  
+  function isStarPoint(x, y, size) {
+    const points = {
+      9: ['2,2','2,6','4,4','6,2','6,6'],
+      13: ['3,3','3,9','6,6','9,3','9,9'],
+      19: ['3,3','3,9','3,15','9,3','9,9','9,15','15,3','15,9','15,15']
+    };
+    return (points[size] || []).includes(`${x},${y}`);
+  }
+  
+  // === СОБЫТИЯ ===
+  checkBtn.addEventListener('click', checkSolution);
+  resetBtn.addEventListener('click', resetBoard);
+  
+  // Запуск
+  initBoard();
+});
+</script>

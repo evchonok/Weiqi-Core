@@ -1,0 +1,22 @@
+<div class="task-page">
+  <h1> Задачи: <%= @type.name %></h1>
+  
+  <div class="tasks-list">
+    <% @tasks.each do |task| %>
+      <div class="task-item">
+        <div>
+          <h3>Задача #<%= task.id %></h3>
+          <p>Очки: <%= task.points %> | Время: <%= task.time_limit_sec %>с</p>
+        </div>
+        <%= link_to "Решать", task_type_task_path(@type, task), class: "btn btn-card" %>
+      </div>
+    <% end %>
+  </div>
+
+  <%= link_to "← Назад к типам", task_level_task_types_path(@type.task_level), class: "btn-back" %>
+</div>
+
+<style>
+  .tasks-list { display: flex; flex-direction: column; gap: 15px; max-width: 600px; margin: 20px auto; }
+  .task-item { background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; }
+</style>
