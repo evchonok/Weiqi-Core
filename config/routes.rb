@@ -30,8 +30,14 @@ Rails.application.routes.draw do
   
   # === Мини-игры ===
   get 'minigames/tictactoe', to: 'minigames#tictactoe'
-  get 'minigames/hangman', to: 'minigames#hangman'
-  get 'minigames/sudoku', to: 'minigames#sudoku'
+  post 'minigames/tictactoe', to: 'minigames#tictactoe_move'
+  delete 'minigames/tictactoe', to: 'minigames#tictactoe_reset'
+  get 'minigames/hangman', to: 'minigames#hangman', as: 'hangman'
+  post 'minigames/hangman/guess', to: 'minigames#hangman_guess', as: 'hangman_guess'
+  delete 'minigames/hangman', to: 'minigames#hangman_reset'
+  get 'minigames/sudoku', to: 'minigames#sudoku', as: 'sudoku'
+  post 'minigames/sudoku/guess', to: 'minigames#sudoku_guess', as: 'sudoku_guess'
+  delete 'minigames/sudoku', to: 'minigames#sudoku_reset'
   
   # === Корень сайта ===
   root 'sessions#new'

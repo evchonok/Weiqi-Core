@@ -1,0 +1,36 @@
+<h1>❌ Крестики-нолики ⭕</h1>
+
+<% if @winner %>
+  <p style="color: green; font-weight: bold; font-size: 1.2rem;">🎉 Победил: <%= @winner %>!</p>
+<% elsif @game_over %>
+  <p style="color: orange; font-weight: bold; font-size: 1.2rem;">🤝 Ничья!</p>
+<% else %>
+  <p style="font-size: 1.1rem;">Ход игрока: <strong><%= @player %></strong></p>
+<% end %>
+
+<%= form_with url: minigames_tictactoe_path, method: :post, local: true do %>
+  <div style="display: grid; grid-template-columns: repeat(3, 80px); gap: 8px; justify-content: center; margin: 20px 0;">
+    <% 0.upto(8) do |i| %>
+      <button 
+        type="submit" 
+        name="position" 
+        value="<%= i %>"
+        style="width: 80px; height: 80px; font-size: 2rem; font-weight: bold;
+               background: <%= @board[i] ? '#e0e0e0' : '#f5f5f5' %>;
+               border: 2px solid #333;
+               cursor: <%= @board[i] || @game_over ? 'not-allowed' : 'pointer' %>;"
+        <%= 'disabled' if @board[i] || @game_over %>
+      >
+        <%= @board[i] || '' %>
+      </button>
+    <% end %>
+  </div>
+<% end %>
+
+<div style="text-align: center; margin-top: 20px;">
+  <%= button_to '🔄 Новая игра', minigames_tictactoe_path, method: :delete,
+      style: "padding: 10px 20px; background: #dc3545; color: white; border: none; border-radius: 5px; cursor: pointer;" %>
+
+  <%= link_to '🏠 В меню', minigames_menu_path,
+      style: "margin-left: 10px; padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 5px;" %>
+</div>

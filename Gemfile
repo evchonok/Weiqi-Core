@@ -64,3 +64,4 @@ group :test do
   gem "capybara"
   gem "selenium-webdriver"
 end
+gem 'Go_Game_Gem', git: 'https://github.com/evchonok/RGGG.git', glob: 'Go_Game_Gem/*.gemspec'
