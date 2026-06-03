@@ -8,7 +8,7 @@
           <h3>Задача #<%= task.id %></h3>
           <p>Очки: <%= task.points %> | Время: <%= task.time_limit_sec %>с</p>
         </div>
-        <%= link_to "Решать", task_type_task_path(@type, task), class: "btn btn-card" %>
+        <%= link_to "Решать", task_level_task_type_task_path(@type.task_level, @type, task), class: "btn btn-card" %>
       </div>
     <% end %>
   </div>

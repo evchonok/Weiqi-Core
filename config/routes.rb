@@ -18,7 +18,7 @@ Rails.application.routes.draw do
 
   resources :task_levels, only: [] do
     resources :task_types, only: [ :index ] do
-      resources :tasks, only: [ :show ] do
+      resources :tasks, only: [ :index, :show ] do
         post "attempt", on: :member
       end
     end

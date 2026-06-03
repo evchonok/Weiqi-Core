@@ -1,7 +1,8 @@
-# app/controllers/tasks_controller.rb
 class TasksController < ApplicationController
   before_action :require_login
+  before_action :set_horror_mode
 
+  # === PUBLIC ACTIONS (должны быть ДО private) ===
   def menu
     @levels = TaskLevel.order(:difficulty)
   end
@@ -13,7 +14,12 @@ class TasksController < ApplicationController
 
   def show
     @task = Task.find(params[:id])
-    @initial_stones = parse_board_state(@task.board_state)
+    @stones = begin
+      raw = @task.board_state
+      raw.present? ? JSON.parse(raw) : {}
+    rescue JSON::ParserError, TypeError
+      {}
+    end
   end
 
   def attempt
@@ -31,7 +37,12 @@ class TasksController < ApplicationController
     end
   end
 
+  # === PRIVATE METHODS (только вспомогательные) ===
   private
+
+  def set_horror_mode
+    @horror_mode = params[:horror] == "true"
+  end
 
   def parse_board_state(raw)
     return {} unless raw.present?
