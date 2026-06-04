@@ -8,7 +8,7 @@
         <div class="card-icon">📜</div>
         <h3><%= type.name %></h3>
         <p><%= truncate(type.instructions, length: 100) %></p>
-        <%= link_to "Открыть задачи", task_type_tasks_path(type), class: "btn btn-card" %>
+        <%= link_to "Открыть задачи", task_level_task_type_tasks_path(@level, type, horror: params[:horror]), class: "btn btn-card" %>
       </div>
     <% end %>
   </div>
