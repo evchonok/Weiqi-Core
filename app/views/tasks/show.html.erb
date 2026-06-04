@@ -354,7 +354,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     board[y][x] = BLACK;
-    userMoves.push(`${String.fromCharCode(65 + x)}${y + 1}`);
+    let letterCode = 65 + x;
+    if (x >= 8) letterCode++; 
+    userMoves.push(`${String.fromCharCode(letterCode)}${y + 1}`);
     
     const cell = document.querySelector(`.intersection[data-x="${x}"][data-y="${y}"]`);
     if (cell) {

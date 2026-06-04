@@ -10,15 +10,13 @@ class TasksController < ApplicationController
   # метод "Открыть задачи"
   def index
     type = TaskType.find(params[:task_type_id])
-    # Выбираем случайную задачу из этого типа
     random_task = type.tasks.sample
 
     if random_task
-      # Перенаправляем сразу на страницу задачи
       redirect_to task_level_task_type_task_path(params[:task_level_id], type, random_task, horror: params[:horror])
     else
-      # Если задач нет
-      redirect_to tasks_menu_path, alert: "В этом разделе пока нет задач."
+      # Просто редирект без alert
+      redirect_to task_level_task_types_path(params[:task_level_id], horror: params[:horror])
     end
   end
 
@@ -43,7 +41,8 @@ class TasksController < ApplicationController
 
   def attempt
     @task = Task.find(params[:id])
-    user_moves = params[:moves] || []
+
+    user_moves = params[:moves]
 
     if @task.check_solution?(user_moves)
       progress = UserProgress.find_or_create_by(user: current_user, task: @task)

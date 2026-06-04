@@ -21,9 +21,9 @@ Task.where(task_type: type1).destroy_all
 
 # === ЗАДАЧА 1: Жизнь группы в центре (9x9) ===
 # Решение: E5 - ключевая точка для создания глаза
-Task.create!(
-  task_type: type1,
-  board_state: {
+Task.find_or_create_by!(
+  task_type: type1, solution: "E5") do |t|
+  t.board_state = {
     # Чёрные камни (окружение)
     "1,6" => "black", "3,6" => "black", "4,6" => "black", "5,6" => "black", "6,6" => "black",
     "2,5" => "black", "7,5" => "black",
@@ -35,19 +35,18 @@ Task.create!(
     "2,4" => "white", "6,4" => "white",
     "3,3" => "white", "6,3" => "white",
     "3,2" => "white", "4,2" => "white", "5,2" => "white", "6,2" => "white"
-  }.to_json,
-  solution: "E5", # Ключевая точка для жизни
-  time_limit_sec: 60,
-  points: 15,
-  horror_enabled: true,
-  hint: "Займи центральный пункт для создания двух глаз"
-)
+  }.to_json
+  t.solution = "E5" # Ключевая точка для жизни
+  t.time_limit_sec = 60
+  t.points = 15
+  t.horror_enabled = true
+  t.hint = "Займи центральный пункт для создания двух глаз"
+end
 
-# === ЗАДАЧА 2: Уголок (правый верхний) ===
-# Решение: S19 - жизненно важный пункт
-Task.create!(
-  task_type: type1,
-  board_state: {
+
+Task.find_or_create_by!(
+  task_type: type1, solution: "A1") do |t|
+  t.board_state = {
     # Чёрные камни
     "0,3" => "black", "1,3" => "black", "2,3" => "black", "3,3" => "black",
     "4,0" => "black", "4,1" => "black", "4,2" => "black",
@@ -55,19 +54,16 @@ Task.create!(
     "0,2" => "white",
     "1,2" => "white", "1,1" => "white",
     "2,1" => "white", "2,0" => "white"
-  }.to_json,
-  solution: "A1", # T19 в координатах Go (индекс 18,18)
-  time_limit_sec: 45,
-  points: 10,
-  horror_enabled: true,
-  hint: "Защитись сверху, чтобы создать пространство для глаз"
-)
+  }.to_json
+  t.time_limit_sec = 45
+  t.points = 10
+  t.horror_enabled = true
+  t.hint = "Защитись сверху, чтобы создать пространство для глаз"
+end
 
-# === ЗАДАЧА 3: Большая группа в центре ===
 # Решение: Q16 - ключевой пункт
-Task.create!(
-  task_type: type1,
-  board_state: {
+Task.find_or_create_by!(task_type: type1, solution: "P16") do |t|
+  t.board_state = {
     # Чёрные камни (окружение)
     "13,17" => "black", "14,17" => "black", "15,17" => "black", "16,17" => "black",
     "12,16" => "black", "17,16" => "black",
@@ -77,25 +73,25 @@ Task.create!(
     "14,16" => "white", "15,16" => "white", "16,16" => "white",
     "13,15" => "white", "17,15" => "white",
     "14,14" => "white", "15,14" => "white", "16,14" => "white", "17,14" => "white"
-  }.to_json,
-  solution: "P16", # P16 в координатах Go (индекс 16,15)
-  time_limit_sec: 90,
-  points: 20,
-  horror_enabled: true,
-  hint: "Найди ключевой пункт для расширения пространства"
-)
+  }.to_json
+  t.time_limit_sec = 90
+  t.points = 20
+  t.horror_enabled = true
+  t.hint = "Найди ключевой пункт для расширения пространства"
+end
+
 
 # === ЗАДАЧИ ДЛЯ ТИПА "АТАКА" ===
 
 # Задача 4: Атака слабой группы
-Task.create!(task_type: type2, solution: "R4") do |t|
+Task.find_or_create_by!(task_type: type2, solution: "R4") do |t|
   t.board_state = {
     "16,1" => "black", "15,2" => "black", "14,2" => "black", "16,4" => "black",
     "16,2" => "white", "15,3" => "white", "14,3" => "white", "14,5" => "black"
   }.to_json
   t.time_limit_sec = 45
-  t.points = 15,
-  t.horror_enabled = true,
+  t.points = 15
+  t.horror_enabled = true
   t.hint = "Соединитесь, порезав соперника"
 end
 
