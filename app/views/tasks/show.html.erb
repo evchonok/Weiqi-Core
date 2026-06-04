@@ -433,7 +433,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentTypeId = <%= @task.task_type.id %>;
         const horrorParam = "<%= params[:horror] %>";
         
-        const nextUrl = `/task_levels/${currentLevelId}/task_types/${currentTypeId}/tasks/random?horror=${horrorParam}`;
+        const nextUrl = `/task_levels/${currentLevelId}/task_types/${currentTypeId}/tasks/random?horror=${horrorParam}&except_id=<%= @task.id %>`;
         
         nextBtn.onclick = function() {
           window.location.href = nextUrl;
