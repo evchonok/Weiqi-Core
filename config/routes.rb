@@ -25,15 +25,10 @@ Rails.application.routes.draw do
     end
   end
 
-  # === Игра на двоих: выбор режима ===
-  get "game/local/modes", to: "menu#local_modes"
-  get "game/online/modes", to: "menu#online_modes"
-
-  # === Игровые режимы (пока заглушки) ===
-  get "game/local/normal", to: "games#local_normal"
-  get "game/local/horror", to: "games#local_horror"
-  get "game/online/normal", to: "games#online_normal"
-  get "game/online/horror", to: "games#online_horror"
+  # === Игра на двоих ===
+get 'game_menu', to: 'menu#game'
+get 'game/local/normal', to: 'games#local_normal'
+get 'game/local/horror', to: 'games#local_horror'
 
   # === Мини-игры ===
   get "minigames/tictactoe", to: "minigames#tictactoe"

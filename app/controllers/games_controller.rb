@@ -7,9 +7,4 @@ class GamesController < ApplicationController
   def local_horror
   end
 
-  def online_normal
-  end
-
-  def online_horror
-  end
 end
