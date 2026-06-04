@@ -1,74 +1,90 @@
-<%# app/views/tasks/menu.html.erb %>
-<div class="task-page">
-  <% if params[:horror].nil? %>
-    <!-- === ЭКРАН ВЫБОРА РЕЖИМА === -->
-    <h1>🧩 Задачник</h1>
-    <p class="subtitle">Выбери режим игры</p>
+<style>
+  .tasks-container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; font-family: 'Georgia', serif; }
+  .tasks-header { text-align: center; margin-bottom: 50px; }
+  .tasks-title { font-size: 2.5rem; color: #2d3748; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 15px; }
+  .tasks-subtitle { color: #718096; font-size: 1.1rem; font-family: 'Courier New', monospace; }
+  
+  .modes-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; margin-bottom: 40px; }
+  .mode-card { background: white; border-radius: 16px; padding: 40px 30px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.08); transition: transform 0.3s, box-shadow 0.3s; border: 2px solid transparent; }
+  .mode-card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(102,126,234,0.15); }
+  .mode-card.normal { border-color: #667eea; }
+  .mode-card.horror { border-color: #9f7aea; }
+  .mode-icon { font-size: 4rem; margin-bottom: 20px; }
+  .mode-card h3 { font-size: 1.8rem; color: #2d3748; margin-bottom: 15px; }
+  .mode-card p { color: #718096; margin-bottom: 25px; line-height: 1.6; }
+  
+  .btn-mode { display: inline-block; padding: 14px 40px; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 1.1rem; transition: all 0.3s; border: none; cursor: pointer; }
+  .btn-normal { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+  .btn-normal:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(102,126,234,0.4); }
+  .btn-horror { background: linear-gradient(135deg, #9f7aea 0%, #667eea 100%); color: white; }
+  .btn-horror:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(159,122,234,0.4); }
+  
+  .levels-section { display: none; }
+  .levels-section.active { display: block; }
+  .levels-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; margin-bottom: 30px; }
+  .level-card { background: white; border-radius: 16px; padding: 35px 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); transition: all 0.3s; border: 2px solid #e2e8f0; }
+  .level-card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(102,126,234,0.15); border-color: #667eea; }
+  .level-card h3 { font-size: 1.6rem; color: #2d3748; margin-bottom: 10px; }
+  .level-card p { color: #718096; margin-bottom: 20px; line-height: 1.5; }
+  .level-difficulty { display: inline-block; padding: 5px 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 6px; font-size: 0.85rem; font-weight: 600; margin-bottom: 15px; }
+  .btn-level { display: inline-block; padding: 12px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 10px; font-weight: 600; transition: all 0.3s; }
+  .btn-level:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(102,126,234,0.4); }
+  .btn-back { display: inline-block; padding: 12px 30px; background: #718096; color: white; text-decoration: none; border-radius: 10px; font-weight: 600; transition: all 0.3s; margin-top: 20px; }
+  .btn-back:hover { background: #4a5568; transform: translateY(-2px); }
+  
+  @media (max-width: 768px) { .tasks-title { font-size: 2rem; } .modes-grid, .levels-grid { grid-template-columns: 1fr; } }
+</style>
 
+<div class="tasks-container">
+  <div class="tasks-header">
+    <h1 class="tasks-title">🎯 Задачник</h1>
+    <p class="tasks-subtitle">Решайте задачи по вейци и совершенствуйте навыки</p>
+  </div>
+
+  <% if params[:horror].nil? %>
     <div class="modes-grid">
-      <!-- Обычный режим -->
       <div class="mode-card normal">
-        <div class="mode-icon">️</div>
+        <div class="mode-icon">🧩</div>
         <h3>Обычный режим</h3>
         <p>Спокойное решение задач без сюрпризов.</p>
-        <%= link_to "Играть", tasks_menu_path(horror: false), class: "btn btn-normal" %>
+        <%= link_to "Играть", tasks_menu_path(horror: false), class: "btn-mode btn-normal" %>
       </div>
 
-      <!-- Хоррор режим -->
       <div class="mode-card horror">
-        <div class="mode-icon"></div>
-        <h3>Хоррор режим</h3>
+        <div class="mode-icon">👻</div>
+        <h3>Хоррор-режим</h3>
         <p>Ошибки будут наказаны...</p>
-        <%= link_to "Играть", tasks_menu_path(horror: true), class: "btn btn-horror" %>
+        <%= link_to "Играть", tasks_menu_path(horror: true), class: "btn-mode btn-horror" %>
       </div>
     </div>
 
   <% else %>
-    <!-- === ЭКРАН ВЫБОРА УРОВНЯ (Старый код) === -->
-    <div class="level-header">
-      <h1>🧩 Задачник: <%= @horror_mode ? "Хоррор" : "Обычный" %> режим</h1>
-      <%= link_to "Сменить режим", tasks_menu_path, class: "btn-small" %>
-    </div>
+    <div class="levels-section active">
+      <div class="tasks-header" style="margin-bottom: 30px;">
+        <h2 style="color: #2d3748; font-size: 1.8rem;">
+          <%= params[:horror] == "true" ? "👻 Хоррор" : "🧩 Обычный" %> режим
+        </h2>
+        <p style="color: #718096; margin-top: 10px;">Выберите уровень сложности</p>
+      </div>
 
-    <div class="levels-grid">
-      <% @levels.each do |level| %>
-        <div class="level-card">
-          <h3><%= level.name %></h3>
-          <p><%= level.description %></p>
-          <!-- ВАЖНО: передаем horror: params[:horror] дальше по цепочке! -->
-          <%= link_to "Выбрать задачи", task_level_task_types_path(level, horror: params[:horror]), class: "btn" %>
-        </div>
-      <% end %>
+      <div class="levels-grid">
+        <% @levels.each do |level| %>
+          <div class="level-card">
+            <span class="level-difficulty">Уровень <%= level.difficulty %></span>
+            <h3><%= level.name %></h3>
+            <p><%= level.description %></p>
+            <%= link_to "Выбрать", task_level_task_types_path(level, horror: params[:horror]), class: "btn-level" %>
+          </div>
+        <% end %>
+      </div>
+
+      <div style="text-align: center;">
+        <%= link_to "← Сменить режим", tasks_menu_path, class: "btn-back" %>
+      </div>
     </div>
   <% end %>
 
-  <%= link_to "← В главное меню", dashboard_path, class: "btn-back" %>
+  <div style="text-align: center; margin-top: 30px;">
+    <%= link_to "← В главное меню", dashboard_path, class: "btn-back" %>
+  </div>
 </div>
-
-<style>
-  .task-page { max-width: 900px; margin: 0 auto; padding: 20px; text-align: center; color: #333; }
-  .subtitle { color: #666; margin-bottom: 30px; }
-  
-  /* Стили для карточек режимов */
-  .modes-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 40px; }
-  .mode-card { padding: 30px; border-radius: 16px; transition: transform 0.3s; }
-  .mode-card:hover { transform: translateY(-5px); }
-  .mode-icon { font-size: 4rem; margin-bottom: 15px; }
-  
-  /* Обычный режим */
-  .mode-card.normal { background: #f0f9ff; border: 2px solid #38bdf8; }
-  .mode-card.normal h3 { color: #0369a1; }
-  .btn-normal { background: #38bdf8; color: white; padding: 10px 25px; border-radius: 8px; text-decoration: none; font-weight: bold; }
-  
-  /* Хоррор режим */
-  .mode-card.horror { background: #1a0505; border: 2px solid #ef4444; color: #fff; }
-  .mode-card.horror h3 { color: #ef4444; }
-  .btn-horror { background: #ef4444; color: white; padding: 10px 25px; border-radius: 8px; text-decoration: none; font-weight: bold; }
-  
-  /* Стили уровней */
-  .levels-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
-  .level-card { background: #f8f9fa; padding: 20px; border-radius: 12px; border: 1px solid #ddd; }
-  .btn { display: inline-block; margin-top: 10px; padding: 8px 20px; background: #667eea; color: white; text-decoration: none; border-radius: 6px; }
-  .btn-back { display: block; margin-top: 30px; color: #666; text-decoration: none; }
-  .btn-small { color: #666; text-decoration: underline; font-size: 0.9rem; }
-</style>

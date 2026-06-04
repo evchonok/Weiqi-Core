@@ -1,10 +1,4 @@
-# db/seeds/tasks.rb
-puts "🌱 Загружаю задачи по уровням..."
-TaskType.where(name: "Эндшпиль").destroy_all
-
-# ==========================================
 # УРОВЕНЬ 1: НОВИЧОК
-# ==========================================
 level1 = TaskLevel.find_or_create_by!(name: "Новичок") do |l|
   l.difficulty = 1
   l.description = "Базовые задачи: жизнь, смерть, простые формы"
@@ -170,10 +164,9 @@ end
 # 3. Продвинутый - Жизнь и смерть
 Task.find_or_create_by!(task_type: type1_l2, solution: "A2") do |t|
   t.board_state = {
-    # Белые
     "1,0" => "white", "1,1" => "white", "1,2" => "white", "1,3" => "white", "0,3" => "white",
     "2,2" => "white", "2,3" => "white", "3,2" => "white", "4,1" => "white", "4,0" => "white",
-    # Чёрные
+
     "0,2" => "black", "0,4" => "black", "1,4" => "black", "2,4" => "black", "3,4" => "black",
     "3,3" => "black", "4,2" => "black", "5,2" => "black", "5,1" => "black", "5,0" => "black",
     "2,1" => "black", "3,1" => "black"
@@ -187,12 +180,12 @@ end
 # 4. Продвинутый - Тесудзи
 Task.find_or_create_by!(task_type: type2_l2, solution: "S14") do |t|
   t.board_state = {
-    # Белые
+
     "15,10" => "white", "16,10" => "white", "16,11" => "white", "17,11" => "white",
     "15,12" => "white", "15,13" => "white", "15,14" => "white", "17,14" => "white",
     "16,15" => "white", "17,15" => "white", "14,15" => "white", "13,16" => "white",
     "14,16" => "white", "15,16" => "white", "13,17" => "white", "14,17" => "white",
-    # Чёрные
+
     "14,11" => "black", "14,12" => "black", "14,13" => "black", "14,14" => "black", "14,15" => "black",
     "15,15" => "black", "16,14" => "black", "18,15" => "black", "16,16" => "black",
     "16,17" => "black", "15,17" => "black", "17,16" => "black"
@@ -206,11 +199,11 @@ end
 # 5. Продвинутый - Тесудзи
 Task.find_or_create_by!(task_type: type2_l2, solution: "S16") do |t|
   t.board_state = {
-    # Белые
+
     "15,12" => "white", "16,12" => "white", "17,12" => "white", "18,12" => "white",
     "13,13" => "white", "14,14" => "white", "15,14" => "white", "16,15" => "white",
     "14,15" => "white", "15,16" => "white",
-    # Чёрные
+
     "14,13" => "black", "15,13" => "black", "16,13" => "black", "17,13" => "black",
     "15,15" => "black", "16,16" => "black", "14,17" => "black", "15,17" => "black", "16,17" => "black"
   }.to_json
@@ -223,11 +216,10 @@ end
 # 6. Продвинутый - Тесудзи
 Task.find_or_create_by!(task_type: type2_l2, solution: "S5") do |t|
   t.board_state = {
-    # Белые
     "16,1" => "white", "17,1" => "white", "15,2" => "white", "15,3" => "white",
     "16,3" => "white", "17,3" => "white", "13,3" => "white", "11,3" => "white",
     "17,5" => "white", "17,6" => "white", "16,6" => "white", "15,6" => "white",
-    # Чёрные
+
     "18,1" => "black", "16,2" => "black", "17,2" => "black", "18,3" => "black",
     "16,4" => "black", "16,5" => "black", "14,4" => "black", "13,4" => "black",
     "14,6" => "black", "14,7" => "black", "16,8" => "black", "17,9" => "black"
@@ -239,9 +231,7 @@ Task.find_or_create_by!(task_type: type2_l2, solution: "S5") do |t|
 end
 
 
-# ==========================================
 # УРОВЕНЬ 3: МАСТЕР
-# ==========================================
 level3 = TaskLevel.find_or_create_by!(name: "Мастер") do |l|
   l.difficulty = 10
   l.description = "Сложные задачи для опытных"
@@ -260,10 +250,9 @@ Task.where(task_type: type2_l3).destroy_all
 # 7. Мастер - Жизнь и смерть
 Task.find_or_create_by!(task_type: type1_l3, solution: "C1") do |t|
   t.board_state = {
-    # Чёрные
     "1,0" => "black", "2,1" => "black", "1,2" => "black", "1,3" => "black", "2,4" => "black",
     "3,4" => "black", "3,3" => "black", "3,2" => "black", "4,2" => "black", "4,1" => "black", "5,0" => "black",
-    # Белые
+
     "0,1" => "white", "0,2" => "white", "0,3" => "white", "1,4" => "white", "1,5" => "white",
     "2,5" => "white", "3,5" => "white", "4,5" => "white", "4,4" => "white", "4,3" => "white",
     "5,2" => "white", "5,1" => "white", "6,0" => "white", "7,0" => "white", "3,0" => "white", "3,1" => "white"
@@ -277,10 +266,10 @@ end
 # 8. Мастер - Жизнь и смерть
 Task.find_or_create_by!(task_type: type1_l3, solution: "D1") do |t|
   t.board_state = {
-    # Чёрные
+
     "1,0" => "black", "0,1" => "black", "1,2" => "black", "2,2" => "black", "3,2" => "black",
     "4,1" => "black", "4,0" => "black",
-    # Белые
+
     "0,2" => "white", "0,3" => "white", "1,3" => "white", "2,3" => "white", "3,3" => "white",
     "4,2" => "white", "5,2" => "white", "6,1" => "white", "3,1" => "white", "2,0" => "white"
   }.to_json
@@ -293,10 +282,10 @@ end
 # 9. Мастер - Тесудзи
 Task.find_or_create_by!(task_type: type2_l3, solution: "A3") do |t|
   t.board_state = {
-    # Белые
+
     "0,0" => "white", "1,1" => "white", "2,1" => "white", "4,0" => "white", "4,1" => "white",
     "4,2" => "white", "3,3" => "white", "3,4" => "white", "2,4" => "white", "1,4" => "white", "0,4" => "white",
-    # Чёрные
+
     "2,0" => "black", "3,0" => "black", "3,1" => "black", "3,2" => "black", "2,2" => "black",
     "2,3" => "black", "1,3" => "black"
   }.to_json
@@ -309,10 +298,10 @@ end
 # 10. Мастер - Тесудзи
 Task.find_or_create_by!(task_type: type2_l3, solution: "S2") do |t|
   t.board_state = {
-    # Белые
+
     "14,0" => "white", "14,1" => "white", "14,2" => "white", "15,2" => "white", "16,2" => "white",
     "17,3" => "white", "18,2" => "white",
-    # Чёрные
+
     "13,0" => "black", "13,1" => "black", "13,2" => "black", "13,3" => "black", "14,3" => "black",
     "15,3" => "black", "16,3" => "black", "17,4" => "black", "18,4" => "black", "15,0" => "black", "18,0" => "black"
   }.to_json
@@ -322,7 +311,7 @@ Task.find_or_create_by!(task_type: type2_l3, solution: "S2") do |t|
   t.hint = "Тактический размен"
 end
 
-puts "✅ Готово! Загружено:"
+puts "Загружено:"
 puts "  - #{TaskLevel.count} уровней"
 puts "  - #{TaskType.count} типов задач"
 puts "  - Всего задач: #{Task.count}"

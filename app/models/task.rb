@@ -10,17 +10,15 @@ class Task < ApplicationRecord
   def check_solution?(user_moves)
     return false if user_moves.blank? || solution.blank?
 
-    # 1. Превращаем решение из БД в массив: "R4" → ["R4"]
+    # Превращаем решение из БД в массив
     expected = solution.to_s.upcase.split(",").map(&:strip)
 
-    # 2. Приводим ввод пользователя к тому же формату (защита от строки или nil)
+    # Приводим ввод пользователя к тому же формату
     actual = if user_moves.is_a?(String)
                user_moves.upcase.split(",").map(&:strip)
     else
                user_moves.map(&:to_s).map(&:upcase).map(&:strip)
     end
-
-    # 3. Строгое сравнение массивов
     expected == actual
   end
 end

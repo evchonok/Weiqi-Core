@@ -48,13 +48,13 @@ class TasksController < ApplicationController
   end
 
   def pick_next_task(type, exclude_id)
-    # 1. Исключаем все решённые задачи текущего пользователя
+    # Исключаем все решённые задачи текущего пользователя
     solved_ids = UserProgress.where(user: current_user, is_solved: true).pluck(:task_id)
     exclude_ids = solved_ids + [ exclude_id.to_i ].compact
 
     available = type.tasks.where.not(id: exclude_ids)
 
-    # 2. Если всё решено, разрешаем повтор, но исключаем текущую задачу
+    # Если всё решено, разрешаем повтор, но исключаем текущую задачу
     if available.empty?
       available = type.tasks.where.not(id: exclude_id)
       flash[:notice] = "🎉 Все задачи решены! Показываем случайную из пройденных."
