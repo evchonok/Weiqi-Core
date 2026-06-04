@@ -1,5 +1,4 @@
 class ApplicationController < ActionController::Base
-  # Только для Rails 7+: разрешить рендеринг без layout для PWA
   allow_browser versions: :modern
   
   # Проверка авторизации

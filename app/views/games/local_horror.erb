@@ -1,6 +1,5 @@
 <%# app/views/games/local_horror.html.erb %>
 <style>
-  /* Принудительно делаем весь фон страницы чёрным */
   body {
     background-color: #111 !important;
     margin: 0;
@@ -12,7 +11,7 @@
 </style>
 
 <div class="game-wrapper horror-theme" data-turbo="false">
-  <h1> Игра: Хоррор-Режим</h1>
+  <h1>Игра: Хоррор-Режим</h1>
   
   <div class="game-header">
     <div class="settings-row">
@@ -34,15 +33,12 @@
 
   <div class="board-scroll-wrapper">
     <div class="board-container">
-      <!-- Доска -->
       <div id="board" class="board"></div>
       
-      <!-- Оверлей скримера -->
       <div id="jumpscare-overlay">
-        <img id="jumpscare-img" src="" alt="BOO!">
+        <img id="jumpscare-img" src="" alt="">
       </div>
       
-      <!-- Модальное окно "Устал?" -->
       <div id="tired-modal" class="tired-modal hidden">
         <div class="modal-content">
           <h2>😰 Устали?</h2>
@@ -63,7 +59,7 @@
     </div>
     
     <div id="scoreboard" class="scoreboard hidden">
-      <h3>📊 Подсчёт очков</h3>
+      <h3>Подсчёт очков</h3>
       <div id="score-details"></div>
       <div id="winner-announcement" class="winner"></div>
     </div>
@@ -71,14 +67,12 @@
   </div>
 </div>
 
-<!-- Аудио элементы -->
 <audio id="audio-bg" loop src="/horror/audios/bg_music.mp3">
 <audio id="audio-scream" src="/horror/audios/scream.mp3">
 <audio id="audio-stone" src="/horror/audios/stone.mp3">
 <audio id="audio-end" src="/horror/audios/end_game.mp3">
 
 <style>
-  /* --- ХОРРОР СТИЛИ --- */
   .horror-theme {
     background-color: #111;
     color: #d00;
@@ -91,15 +85,11 @@
   .horror-theme .intersection.black { background: #000; box-shadow: 0 0 8px #f00; }
   .horror-theme .intersection.white { background: #ccc; border-color: #500; }
   
-    /* --- ХОРРОР ЭФФЕКТЫ --- */
-  
-  /* Виньетка: затемнение по краям, усиливается с интенсивностью */
   .board-container {
     transition: filter 2s ease, box-shadow 2s ease;
     position: relative;
   }
   
-  /* Виньетка через псевдоэлемент */
   .board-container::after {
     content: "";
     position: absolute;
@@ -111,7 +101,6 @@
     z-index: 10;
   }
   
-  /* Дрожание камней (не всей доски!) */
   @keyframes stoneTremor {
     0%, 100% { transform: translate(0, 0) rotate(0deg); }
     25% { transform: translate(-0.5px, 0.5px) rotate(-0.3deg); }
@@ -119,13 +108,11 @@
     75% { transform: translate(-0.5px, -0.5px) rotate(-0.3deg); }
   }
   
-  /* Класс для "дрожащих" камней */
   .intersection.occupied.shaky {
     animation: stoneTremor 0.3s infinite ease-in-out;
-    animation-delay: calc(var(--delay, 0) * 0.05s); /* Разная задержка для каждого камня */
+    animation-delay: calc(var(--delay, 0) * 0.05s);
   }
   
-  /* Скример (без изменений) */
   .board-container.shaking {
     animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
   }
@@ -136,15 +123,14 @@
     40%, 60% { transform: translate3d(4px, 0, 0); }
   }
 
-  /* Скример */
   #jumpscare-overlay {
-    position: fixed; /* Было absolute, меняем на fixed */
+    position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
     background: #000; 
     display: none; 
     justify-content: center; 
     align-items: center;
-    z-index: 9999; /* Увеличиваем z-index */
+    z-index: 9999;
   }
 
   #jumpscare-img { 
@@ -154,7 +140,6 @@
     border: none;
   }
 
-  /* Модалка */
   .tired-modal {
     position: absolute; top: 0; left: 0; width: 100%; height: 100%;
     background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center;
@@ -166,7 +151,6 @@
   }
   .modal-buttons { display: flex; gap: 15px; justify-content: center; margin-top: 20px; }
 
-  /* --- СТАНДАРТНЫЕ СТИЛИ (адаптированные) --- */
   .game-wrapper { max-width: 1100px; margin: 0 auto; padding: 15px; text-align: center; position: relative; }
   .game-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px; }
   .settings-row { display: flex; align-items: center; gap: 10px; }
@@ -205,7 +189,6 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-  // --- КОНФИГУРАЦИЯ ХОРРОРА ---
   const scareImages = [
     '/horror/images/scare1.jpg',
     '/horror/images/scare2.jpg',
@@ -223,7 +206,6 @@ document.addEventListener('DOMContentLoaded', () => {
   let lastBoardState = null;
   let territoryMap = null;
   
-  // Состояние хоррора
   let horrorState = {
     intensity: 0,
     lastScareTime: 0
@@ -239,13 +221,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const messageEl = document.getElementById('message');
   const sizeSelect = document.getElementById('board-size');
   
-  // Аудио элементы
   const audioBg = document.getElementById('audio-bg');
   const audioScream = document.getElementById('audio-scream');
   const audioStone = document.getElementById('audio-stone');
   const audioEnd = document.getElementById('audio-end');
 
-  // Запуск фоновой музыки (браузеры требуют взаимодействия для старта аудио)
+  // Браузеры блокируют автовоспроизведение аудио без клика
   document.addEventListener('click', () => {
     if (audioBg.paused && !gameOver) audioBg.play().catch(e => console.log("Audio play failed", e));
   }, { once: true });
@@ -297,20 +278,15 @@ document.addEventListener('DOMContentLoaded', () => {
     updateBoardAtmosphere();
   }
 
-  // --- ХОРРОР ЛОГИКА ---
   function updateHorrorIntensity() {
-    // Интенсивность растет с каждым ходом (максимум 1.0)
     const movesCount = board.flat().filter(c => c !== EMPTY).length;
     horrorState.intensity = Math.min(1.0, movesCount / 80);
     
-    // Визуальные эффекты
     const boardContainer = document.querySelector('.board-container');
     if (boardContainer) {
-      const darkness = 0.5 + (horrorState.intensity * 0.5);
       boardContainer.style.filter = `brightness(${1 - horrorState.intensity * 0.3}) contrast(${1 + horrorState.intensity * 0.2})`;
     }
     
-    // Аудио эффекты (громкость фона растет)
     if (audioBg) {
       audioBg.volume = 0.1 + (horrorState.intensity * 0.5);
     }
@@ -321,27 +297,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const boardContainer = document.querySelector('.board-container');
     if (!boardContainer) return;
     
-    // Виньетка (красное затемнение по краям)
     const vignetteStrength = horrorState.intensity * 0.6;
-    boardContainer.style.setProperty('--vignette', vignetteStrength);
     boardContainer.style.boxShadow = `0 0 30px rgba(128, 0, 0, ${vignetteStrength * 0.3})`;
-    
-    // Лёгкое затемнение самой доски
     boardContainer.style.filter = `brightness(${1 - horrorState.intensity * 0.2}) contrast(${1 + horrorState.intensity * 0.1})`;
     
-    // Плавное дрожание камней
     const shakyStones = document.querySelectorAll('.intersection.occupied.shaky');
     shakyStones.forEach(stone => {
-      // Три уровня интенсивности:
       if (horrorState.intensity < 0.6) {
-        // 50-60%: ОЧЕНЬ слабое дрожание (почти незаметное)
         stone.style.animationDuration = '1.5s';
         stone.style.transform = 'translate(0, 0)';
       } else if (horrorState.intensity < 0.8) {
-        // 60-80%: Лёгкое дрожание
         stone.style.animationDuration = '0.8s';
       } else {
-        // 80-100%: Сильное дрожание
         const duration = 0.4 - (horrorState.intensity * 0.2);
         stone.style.animationDuration = `${Math.max(0.15, duration)}s`;
       }
@@ -358,21 +325,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const overlay = document.getElementById('jumpscare-overlay');
     const img = document.getElementById('jumpscare-img');
 
-    
     img.src = randomImg;
-  
     overlay.style.display = 'flex';
     
-    // Тряска доски
     document.querySelector('.board-container').classList.add('shaking');
     
-    // Звук
     if (audioScream) {
       audioScream.currentTime = 0;
       audioScream.play().catch(e => console.log("Scream play failed", e));
     }
     
-    // Убираем через 600мс
     setTimeout(() => {
       overlay.style.display = 'none';
       document.querySelector('.board-container').classList.remove('shaking');
@@ -385,7 +347,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const opponent = currentTurn === BLACK ? WHITE : BLACK;
     board[y][x] = currentTurn;
     
-    // Звук хода
     if (audioStone) {
       audioStone.volume = 0.5;
       audioStone.currentTime = 0;
@@ -394,22 +355,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const capturedGroups = getCapturedGroups(x, y, opponent);
     
-    // Проверка самоубийства
+    // Запрещаем самоубийственные ходы
     if (capturedGroups.length === 0 && !hasLiberties(x, y)) {
       board[y][x] = EMPTY;
-      showMessage("❌ Самоубийственный ход запрещён!");
-      triggerJumpScare(); // Скример за ошибку
+      showMessage("Самоубийственный ход запрещён!");
+      triggerJumpScare();
       return;
     }
     
+    // Правило Ко
     const currentState = boardToString();
     if (currentState === lastBoardState) {
       board[y][x] = EMPTY;
-      showMessage("⚠️ Правило Ко!");
+      showMessage("Нарушено правило Ко!");
       return;
     }
     
-    // Если захватили камни -> Скример!
+    // Скример при захвате камней
     if (capturedGroups.length > 0) {
       triggerJumpScare();
     }
@@ -430,8 +392,6 @@ document.addEventListener('DOMContentLoaded', () => {
     checkGameEnd();
   }
 
-  // ... (Остальная логика игры getGroup, hasLiberties, getCapturedGroups, calculateScore такая же, как в normal) ...
-  
   function getGroup(x, y, color) {
     const group = []; const visited = new Set(); const queue = [[x, y]];
     visited.add(`${x},${y}`);
@@ -514,22 +474,19 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   }
 
-    function updateUI() {
+  function updateUI() {
     document.querySelectorAll('.intersection').forEach(cell => {
       const x = parseInt(cell.dataset.x), y = parseInt(cell.dataset.y);
       
-      // Сбрасываем классы
       cell.className = 'intersection';
       if (isStarPoint(x, y, BOARD_SIZE)) cell.classList.add('star-point');
       
-      // Добавляем цвет камня + класс occupied
       if (board[y][x] === BLACK) {
         cell.classList.add('black', 'occupied');
       } else if (board[y][x] === WHITE) {
         cell.classList.add('white', 'occupied');
       }
       
-      // Дрожание камней, если интенсивность > 0.3
       if (!gameOver && horrorState.intensity > 0.5) {
         if (board[y][x] !== EMPTY) {
           cell.classList.add('shaky');
@@ -537,7 +494,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
       
-      // Подсветка территории после окончания игры
       if (!gameOver) return;
       const key = `${x},${y}`;
       if (territoryMap && territoryMap[key]) cell.classList.add(`territory-${territoryMap[key]}`);
@@ -547,7 +503,6 @@ document.addEventListener('DOMContentLoaded', () => {
     capturedByBlackEl.textContent = prisoners[BLACK];
     capturedByWhiteEl.textContent = prisoners[WHITE];
     
-    // Обновляем атмосферу доски
     updateBoardAtmosphere();
   }
 
@@ -572,11 +527,10 @@ document.addEventListener('DOMContentLoaded', () => {
       document.querySelectorAll('.intersection').forEach(c => c.classList.add('disabled'));
       updateUI();
       
-      // Хоррор логика окончания
       if (audioEnd) audioEnd.play();
       setTimeout(() => {
         document.getElementById('tired-modal').classList.add('visible');
-      }, 1500); // Показать модалку через 1.5 сек после конца
+      }, 1500);
     }
   }
 
@@ -585,7 +539,6 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => { if (messageEl.textContent === msg) messageEl.textContent = ""; }, 2500);
   }
 
-  // Кнопки
   sizeSelect.addEventListener('change', (e) => { BOARD_SIZE = parseInt(e.target.value); resetGame(); });
   
   document.getElementById('pass-btn').addEventListener('click', () => {
@@ -593,12 +546,11 @@ document.addEventListener('DOMContentLoaded', () => {
     passCount++;
     currentTurn = currentTurn === BLACK ? WHITE : BLACK;
     updateUI(); checkGameEnd();
-    showMessage("⏭️ Пас...");
+    showMessage("Пас...");
   });
 
   document.getElementById('reset-btn').addEventListener('click', () => { resetGame(); });
 
-  // Закрытие модалки
   window.closeTiredModal = function() {
     document.getElementById('tired-modal').classList.remove('visible');
   }
