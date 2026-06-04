@@ -78,7 +78,7 @@ Task.create!(
     "13,15" => "white", "17,15" => "white",
     "14,14" => "white", "15,14" => "white", "16,14" => "white", "17,14" => "white"
   }.to_json,
-  solution: "Q16", # P16 в координатах Go (индекс 16,15)
+  solution: "P16", # P16 в координатах Go (индекс 16,15)
   time_limit_sec: 90,
   points: 20,
   horror_enabled: true,

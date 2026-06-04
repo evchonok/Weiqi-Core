@@ -16,10 +16,11 @@ Rails.application.routes.draw do
   # === ЗАДАЧНИК ===
   get "tasks/menu", to: "tasks#menu", as: "tasks_menu"
 
-  resources :task_levels, only: [] do
-    resources :task_types, only: [ :index ] do
-      resources :tasks, only: [ :index, :show ] do
+    resources :task_levels, only: [] do
+    resources :task_types, only: [:index] do
+      resources :tasks, only: [:index, :show] do
         post "attempt", on: :member
+        get "random", on: :collection
       end
     end
   end
