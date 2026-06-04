@@ -33,7 +33,7 @@
     </div>
     
     <div id="scoreboard" class="scoreboard hidden">
-      <h3>📊 Подсчёт очков</h3>
+      <h3>Подсчёт очков</h3>
       <div id="score-details"></div>
       <div id="winner-announcement" class="winner"></div>
     </div>
@@ -56,7 +56,7 @@
     border-radius: 8px; 
     box-shadow: 0 4px 12px rgba(0,0,0,0.2); 
     display: inline-block; 
-    max-width: 95vw; /* Не шире экрана */
+    max-width: 95vw;
   }
   
   .board { 
@@ -98,7 +98,6 @@
   .btn-outline { background: transparent; border: 1px solid #6c757d; color: #6c757d; }
   .btn:hover { opacity: 0.9; }
   
-  /* Адаптив для маленьких экранов */
   @media (max-width: 768px) {
     .board { grid-template-columns: repeat(var(--board-size, 9), 28px); grid-template-rows: repeat(var(--board-size, 9), 28px); }
     .intersection { width: 28px; height: 28px; }
@@ -130,6 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const messageEl = document.getElementById('message');
   const sizeSelect = document.getElementById('board-size');
 
+  // Координаты звёздных точек (хоси) для разных размеров доски
   function isStarPoint(x, y, size) {
     const points = [];
     if (size === 9) points.push('2,2', '2,6', '4,4', '6,2', '6,6');
@@ -177,23 +177,30 @@ document.addEventListener('DOMContentLoaded', () => {
     const opponent = currentTurn === BLACK ? WHITE : BLACK;
     board[y][x] = currentTurn;
     const capturedGroups = getCapturedGroups(x, y, opponent);
+    
+    // Запрещаем самоубийственные ходы
     if (capturedGroups.length === 0 && !hasLiberties(x, y)) {
       board[y][x] = EMPTY;
       showMessage("❌ Самоубийственный ход запрещён!");
       return;
     }
+    
+    // Правило Ко: нельзя возвращать предыдущую позицию
     const currentState = boardToString();
     if (currentState === lastBoardState) {
       board[y][x] = EMPTY;
-      showMessage("️ Нарушено правило Ко!");
+      showMessage("⚠️ Нарушено правило Ко!");
       return;
     }
+    
+    // Применяем захват камней
     capturedGroups.forEach(group => {
       group.forEach(([gx, gy]) => {
         board[gy][gx] = EMPTY;
         prisoners[currentTurn]++;
       });
     });
+    
     lastBoardState = boardToString();
     passCount = 0;
     currentTurn = opponent;
@@ -202,6 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
     checkGameEnd();
   }
 
+  // Поиск группы связанных камней одного цвета
   function getGroup(x, y, color) {
     const group = []; const visited = new Set(); const queue = [[x, y]];
     visited.add(`${x},${y}`);
@@ -220,6 +228,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return group;
   }
 
+  // Проверка, есть ли у группы свободные точки (либерти)
   function hasLiberties(x, y) {
     const group = getGroup(x, y, board[y][x]);
     return group.some(([gx, gy]) => {
@@ -231,6 +240,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Поиск групп противника, которые будут захвачены этим ходом
   function getCapturedGroups(x, y, opponentColor) {
     const captured = []; const dirs = [[0,1],[0,-1],[1,0],[-1,0]];
     for (const [dx, dy] of dirs) {
@@ -248,6 +258,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function boardToString() { return board.map(row => row.join('')).join(''); }
 
+  // Подсчёт очков по японским правилам: территория + пленные + коми
   function calculateScore() {
     const visited = new Set(); let blackTerritory = 0, whiteTerritory = 0; const tMap = {};
     for (let y = 0; y < BOARD_SIZE; y++) {
