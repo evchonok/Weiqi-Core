@@ -1,65 +1,89 @@
-<h1> Судоку</h1>
+<h1 style="text-align: center; margin-bottom: 20px;">Судоку</h1>
 
 <% if @status == "won" %>
-  <p style="color: #27ae60; font-weight: bold; font-size: 1.5rem; margin: 20px 0;">🎉 Поздравляю! Судоку решено верно!</p>
+  <p style="color: #27ae60; font-weight: bold; font-size: 1.5rem; margin: 20px 0; text-align: center;">Поздравляю! Судоку решено верно!</p>
 <% else %>
-  <p style="font-size: 1.1rem; margin: 20px 0;">Ошибок: <strong style="color: #e74c3c;"><%= @errors || 0 %></strong></p>
+  <p style="font-size: 1.1rem; margin: 20px 0; text-align: center;">Ошибок: <strong style="color: #e74c3c;"><%= @errors || 0 %></strong></p>
 <% end %>
 
-<%= form_with url: sudoku_guess_path, method: :post, local: true do %>
-  <!-- Сетка 9x9 -->
-  <div style="display: inline-grid; grid-template-columns: repeat(9, 40px); gap: 1px; background: #333; padding: 2px; border-radius: 4px;">
-    <% 0.upto(8) do |row| %>
-      <% 0.upto(8) do |col| %>
-        <%
-          original = @board[row][col]
-          # Толстые границы для блоков 3x3
-          border_right = (col == 2 || col == 5) ? "border-right: 3px solid #000;" : ""
-          border_bottom = (row == 2 || row == 5) ? "border-bottom: 3px solid #000;" : ""
-          # Значение, введённое пользователем (или пустая строка)
-          user_val = @user_input["#{row}_#{col}"] || ""
-        %>
-        <div style="
-          width: 40px; height: 40px; 
-          background: <%= original != 0 ? '#e0e0e0' : '#fff' %>;
-          display: flex; align-items: center; justify-content: center;
-          font-weight: bold;
-          <%= border_right %><%= border_bottom %>
-        ">
-          <% if original != 0 %>
-            <!-- Исходная цифра (нельзя менять) -->
-            <span style="color: #555;"><%= original %></span>
-          <% else %>
-            <!-- Поле для ввода -->
-            <input type="number" 
-                   name="sudoku[<%= row %>][<%= col %>]" 
-                   value="<%= user_val %>" 
-                   min="1" max="9" 
-                   style="width: 100%; height: 100%; text-align: center; border: none; font-size: 1.2rem; background: transparent; outline: none;"
-                   <%= 'disabled' if @status == 'won' %>>
+<div style="display: flex; justify-content: center; margin: 30px 0;">
+  <%= form_with url: sudoku_guess_path, method: :post, local: true do %>
+    <div style="border: 3px solid #2c3e50; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+      <% 0.upto(8) do |row| %>
+        <div style="display: flex;">
+          <% 0.upto(8) do |col| %>
+            <%
+              original = @board[row][col]
+              user_val = @user_input["#{row}_#{col}"] || ""
+              # Жирные границы для блоков 3x3
+              border_right = (col == 2 || col == 5) ? "border-right: 3px solid #2c3e50;" : ""
+              border_bottom = (row == 2 || row == 5) ? "border-bottom: 3px solid #2c3e50;" : ""
+              bg_color = original != 0 ? '#ecf0f1' : '#ffffff'
+            %>
+            <div style="
+              width: 50px; 
+              height: 50px; 
+              background: <%= bg_color %>;
+              display: flex; 
+              align-items: center; 
+              justify-content: center;
+              border: 1px solid #bdc3c7;
+              <%= border_right %>
+              <%= border_bottom %>
+              font-weight: <%= original != 0 ? 'bold' : 'normal' %>;
+              font-size: 1.3rem;
+              color: #2c3e50;
+            ">
+              <% if original != 0 %>
+                <!-- Исходная цифра (нельзя менять) -->
+                <span><%= original %></span>
+              <% else %>
+                <!-- Поле для ввода -->
+                <input type="number" 
+                       name="sudoku[<%= row %>][<%= col %>]" 
+                       value="<%= user_val %>" 
+                       min="1" max="9" 
+                       style="width: 100%; height: 100%; text-align: center; border: none; font-size: 1.3rem; background: transparent; outline: none; -moz-appearance: textfield;"
+                       oninput="this.value = this.value.replace(/[^1-9]/g, '')"
+                       <%= 'disabled' if @status == 'won' %>>
+              <% end %>
+            </div>
           <% end %>
         </div>
       <% end %>
-    <% end %>
-  </div>
+    </div>
 
-  <div style="margin-top: 20px; text-align: center;">
-    <% if @status == "playing" %>
-      <button type="submit" style="padding: 10px 30px; background: #27ae60; color: white; border: none; border-radius: 5px; font-size: 1.1rem; cursor: pointer;">
-        ✅ Проверить всё поле
-      </button>
-    <% end %>
-  </div>
-<% end %>
-
-<div style="margin-top: 30px; text-align: center;">
-  <%= button_to '🔄 Сбросить игру', sudoku_path, method: :delete,
-      style: "padding: 8px 20px; background: #e74c3c; color: white; border: none; border-radius: 5px; cursor: pointer;" %>
-
-  <%= link_to '🏠 В меню', minigames_menu_path,
-      style: "margin-left: 15px; padding: 8px 20px; background: #3498db; color: white; text-decoration: none; border-radius: 5px;" %>
+    <div style="margin-top: 30px; text-align: center;">
+      <% if @status == "playing" %>
+        <button type="submit" style="padding: 12px 40px; background: #27ae60; color: white; border: none; border-radius: 8px; font-size: 1.1rem; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: all 0.3s;"
+                onmouseover="this.style.background='#229954'; this.style.transform='translateY(-2px)'"
+                onmouseout="this.style.background='#27ae60'; this.style.transform='translateY(0)'">
+          Проверить всё поле
+        </button>
+      <% end %>
+    </div>
+  <% end %>
 </div>
 
-<p style="font-size: 0.9rem; color: #666; margin-top: 20px; max-width: 400px; margin-left: auto; margin-right: auto;">
-  💡 Вводи цифры 1-9 в пустые клетки. Каждая строка, столбец и блок 3×3 должны содержать все цифры без повторений.
+<div style="margin-top: 30px; text-align: center;">
+  <%= button_to 'Сбросить игру', sudoku_path, method: :delete,
+      style: "padding: 10px 25px; background: #e74c3c; color: white; border: none; border-radius: 8px; cursor: pointer; margin: 0 10px 15px 0; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: inline-block;" %>
+
+  <%= link_to 'В меню', minigames_menu_path,
+      style: "display: inline-block; padding: 10px 25px; background: #3498db; color: white; text-decoration: none; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);" %>
+</div>
+
+<p style="font-size: 0.9rem; color: #7f8c8d; margin-top: 25px; max-width: 500px; margin-left: auto; margin-right: auto; text-align: center; line-height: 1.5;">
+  Вводи цифры 1-9 в пустые клетки. Каждая строка, столбец и блок 3×3 должны содержать все цифры без повторений
 </p>
+
+<style>
+  /* Убираем стрелочки у input type="number" */
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  
+  
+</style>

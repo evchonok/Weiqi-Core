@@ -1,4 +1,5 @@
 # УРОВЕНЬ 1: НОВИЧОК
+
 level1 = TaskLevel.find_or_create_by!(name: "Новичок") do |l|
   l.difficulty = 1
   l.description = "Базовые задачи: жизнь, смерть, простые формы"
