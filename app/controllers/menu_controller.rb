@@ -12,10 +12,4 @@ class MenuController < ApplicationController
   def minigames
     # Подменю мини-игр
   end
-
-    def local_modes
-  end
-
-  def online_modes
-  end
 end
